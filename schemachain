@@ -20,6 +20,8 @@ function cmd_generate_migration() {
   local POSTGRES_URI
   local POSTGRES_DATA_DIR
   local NEXT_MIGRATION_INDEX
+  local LAST_MIGRATION_FILE
+  local MIGRATION_FILE
 
   CURRENT_SCHEMA_FILE=$1
   if [ ! -e "$CURRENT_SCHEMA_FILE" ]; then
@@ -97,6 +99,12 @@ function cmd_generate_migration() {
   ######################################################################
 
   NEXT_MIGRATION_INDEX=$(printf "%03d" $(get_next_migration_index migrations))
+
+  if get_last_migration_file | grep "-${CURRENT_SCHEMA_FINGERPRINT}.sql$" >/dev/null; then
+    echo "Error: current schema is already covered by last existing migration."
+    echo
+    exit 1
+  fi
   
   MIGRATION_FILE=migrations/${NEXT_MIGRATION_INDEX}_${PREVIOUS_SCHEMA_FINGERPRINT}-${CURRENT_SCHEMA_FINGERPRINT}.sql
   echo -n "Diff'ing previous and current schemas... "
@@ -116,7 +124,7 @@ function cmd_check() {
   
   CURRENT_SCHEMA_FILE=$1
   CURRENT_SCHEMA_FINGERPRINT=$(fingerprint_schema $CURRENT_SCHEMA_FILE)
-  LAST_MIGRATION_FILE=$(ls -1 migrations | tail -1)
+  LAST_MIGRATION_FILE=get_last_migration_file
 
   if echo $LAST_MIGRATION_FILE | grep "-${CURRENT_SCHEMA_FINGERPRINT}.sql$" >/dev/null; then
     echo "Last migration points to current schema, all good."
@@ -157,6 +165,10 @@ function cmd_check() {
 #     TARGET_SCHEMA_FINGERPRINT=$SOURCE_SCHEMA_FINGERPRINT
 #   done
 # }
+
+function get_last_migration_file() {
+  ls -1 migrations | tail -1
+}
 
 function get_next_migration_index() {
   local MIGRATION_DIRECTORY
