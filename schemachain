@@ -101,8 +101,7 @@ function cmd_generate_migration() {
   MIGRATION_FILE=migrations/${NEXT_MIGRATION_INDEX}_${PREVIOUS_SCHEMA_FINGERPRINT}-${CURRENT_SCHEMA_FINGERPRINT}.sql
   echo -n "Diff'ing previous and current schemas... "
   # XXX why does migra exit with status code 2?
-  docker run --net host migra:local migra --unsafe \
-         "${DB_PREVIOUS_URI}" "${DB_CURRENT_URI}" >${MIGRATION_FILE} || true
+  migra --unsafe "${DB_PREVIOUS_URI}" "${DB_CURRENT_URI}" >${MIGRATION_FILE} || true
   echo "done."
   echo
 
