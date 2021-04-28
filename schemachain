@@ -6,8 +6,8 @@ function cmd_help() {
   echo "Usage: $(basename $0) <command> [options]"
   echo
   echo "Commands:"
-  echo "  test schema.sql"
-  echo "  generate schema.sql"
+  echo "  check schema.sql    - check that schema matches latest migration"
+  echo "  generate schema.sql - generate migration from unstaged schema"
   echo
 }
 
@@ -113,54 +113,54 @@ function cmd_generate_migration() {
   echo
 }
 
-function cmd_test() {
+function cmd_check() {
+  local CURRENT_SCHEMA_FILE
   local CURRENT_SCHEMA_FINGERPRINT
+  local LAST_MIGRATION_FILE
   
-  if [ -z "$CURRENT_SCHEMA_FILE" ]; then 
-    CURRENT_SCHEMA_FILE=$1
-    if [ ! -e "$CURRENT_SCHEMA_FILE" ]; then
-      cmd_help
-      exit 1
-    fi
-  fi
-
+  CURRENT_SCHEMA_FILE=$1
   CURRENT_SCHEMA_FINGERPRINT=$(fingerprint_schema $CURRENT_SCHEMA_FILE)
-  
-  echo "Checking migration chain..."
+  LAST_MIGRATION_FILE=$(ls -1 migrations | tail -1)
 
-  if verify_migration_chain $CURRENT_SCHEMA_FINGERPRINT; then
-    echo "Migration chain is ok."
-    echo
+  if echo $LAST_MIGRATION_FILE | grep "-${CURRENT_SCHEMA_FINGERPRINT}.sql$" >/dev/null; then
+    echo "Last migration points to current schema, all good."
   else
-    exit 1
+    echo "Error: Last migration does not match current schema fingerprint."
+    echo "  - last migration file: ${LAST_MIGRATION_FILE}"
+    echo "  - current schema fingerprint: ${CURRENT_SCHEMA_FINGERPRINT}"
+    echo
+    return 1
   fi
 }
 
-function verify_migration_chain() {
-  local MIGRATION_FILE
-  local TARGET_SCHEMA_FINGERPRINT
-  local SOURCE_SCHEMA_FINGERPRINT
+# Not reliable: will break when when e.g. a schema is reverted to a previous
+# state, leading to two schemas in the history having the same fingerprint.
 
-  TARGET_SCHEMA_FINGERPRINT=$1
+# function verify_migration_chain() {
+#   local MIGRATION_FILE
+#   local TARGET_SCHEMA_FINGERPRINT
+#   local SOURCE_SCHEMA_FINGERPRINT
+
+#   TARGET_SCHEMA_FINGERPRINT=$1
   
-  while true; do
-    MIGRATION_FILE=$(echo "migrations/from_*_to_${TARGET_SCHEMA_FINGERPRINT}.sql")
+#   while true; do
+#     MIGRATION_FILE=$(echo "migrations/from_*_to_${TARGET_SCHEMA_FINGERPRINT}.sql")
 
-    if [ ! -f $MIGRATION_FILE ]; then
-      echo "ERROR: Migration to schema $TARGET_SCHEMA_FINGERPRINT missing."
-      echo
-      return 1
-    fi
+#     if [ ! -f $MIGRATION_FILE ]; then
+#       echo "ERROR: Migration to schema $TARGET_SCHEMA_FINGERPRINT missing."
+#       echo
+#       return 1
+#     fi
 
-    SOURCE_SCHEMA_FINGERPRINT=$(echo $MIGRATION_FILE | grep -Po "(?<=from_).+?(?=_to)")
+#     SOURCE_SCHEMA_FINGERPRINT=$(echo $MIGRATION_FILE | grep -Po "(?<=from_).+?(?=_to)")
 
-    if [ "$SOURCE_SCHEMA_FINGERPRINT" = "none" ]; then
-      break
-    fi
+#     if [ "$SOURCE_SCHEMA_FINGERPRINT" = "none" ]; then
+#       break
+#     fi
 
-    TARGET_SCHEMA_FINGERPRINT=$SOURCE_SCHEMA_FINGERPRINT
-  done
-}
+#     TARGET_SCHEMA_FINGERPRINT=$SOURCE_SCHEMA_FINGERPRINT
+#   done
+# }
 
 function get_next_migration_index() {
   local MIGRATION_DIRECTORY
@@ -198,9 +198,9 @@ function dispatch_command() {
     "" | "-h" | "--help")
       cmd_help
       ;;
-    test)
+    check)
       shift
-      cmd_test "$@"
+      cmd_check "$@"
       ;;
     generate)
       shift
