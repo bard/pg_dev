@@ -40,7 +40,7 @@ function cmd_generate_migration() {
     PREVIOUS_SCHEMA_COMMIT=none
     PREVIOUS_SCHEMA_FINGERPRINT=none
   elif ! does_file_have_changes $CURRENT_SCHEMA_FILE; then
-    echo "Error: there are no uncommitted changes in $CURRENT_SCHEMA_FILE."
+    echo "Error: there are no unstaged changes in $CURRENT_SCHEMA_FILE."
     echo 
     echo "Please run this tool before committing changes to the schema file,"
     echo "then commit schema changes and migration together."
@@ -101,7 +101,7 @@ function cmd_generate_migration() {
 
   NEXT_MIGRATION_INDEX=$(printf "%03d" $(get_next_migration_index migrations))
   
-  MIGRATION_FILE=migrations/${NEXT_MIGRATION_INDEX}-from_${PREVIOUS_SCHEMA_FINGERPRINT}_to_${CURRENT_SCHEMA_FINGERPRINT}.sql
+  MIGRATION_FILE=migrations/${NEXT_MIGRATION_INDEX}_${PREVIOUS_SCHEMA_FINGERPRINT}-${CURRENT_SCHEMA_FINGERPRINT}.sql
   echo -n "Diff'ing previous and current schemas... "
   # XXX why does migra exit with status code 2?
   docker run --net host migra:local migra --unsafe \
@@ -165,7 +165,7 @@ function verify_migration_chain() {
 function get_next_migration_index() {
   local MIGRATION_DIRECTORY
   MIGRATION_DIRECTORY=$1
-  ls -1 $MIGRATION_DIRECTORY | egrep '[0-9]+-' | wc -l
+  ls -1 $MIGRATION_DIRECTORY | egrep '^[0-9]+_' | wc -l
 }
 
 function fingerprint_schema() {
