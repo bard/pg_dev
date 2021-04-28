@@ -1,0 +1,194 @@
+#!/bin/bash
+
+set -e
+
+function cmd_help() {
+  echo "Usage: $(basename $0) <command> [options]"
+  echo
+  echo "Commands:"
+  echo "  test schema.sql"
+  echo "  generate schema.sql"
+  echo
+}
+
+function cmd_generate_migration() {
+  local CONTAINER_NAME
+  local CURRENT_SCHEMA_FINGERPRINT
+  local PREVIOUS_SCHEMA_FILE
+  local PREVIOUS_SCHEMA_FINGERPRINT
+  local PREVIOUS_SCHEMA_COMMIT
+  
+  if [ -z "$CURRENT_SCHEMA_FILE" ]; then 
+    CURRENT_SCHEMA_FILE=$1
+    if [ ! -e "$CURRENT_SCHEMA_FILE" ]; then
+      cmd_help
+      exit 1
+    fi
+  fi
+
+  CONTAINER_NAME=postgres-schema-container
+
+  trap 'docker rm --force --volumes ${CONTAINER_NAME} >/dev/null 2>/dev/null' EXIT
+  
+  CURRENT_SCHEMA_FINGERPRINT=$(fingerprint_schema $CURRENT_SCHEMA_FILE)
+  
+  echo "Current schema:"
+  echo "  - location: $CURRENT_SCHEMA_FILE"
+  echo "  - fingerprint: $CURRENT_SCHEMA_FINGERPRINT"
+  echo
+
+  PREVIOUS_SCHEMA_FILE=/tmp/schema_previous.sql
+
+  if is_file_in_repo $CURRENT_SCHEMA_FILE; then
+    git show ${PREVIOUS_SCHEMA_COMMIT}:${CURRENT_SCHEMA_FILE} >${PREVIOUS_SCHEMA_FILE}
+    PREVIOUS_SCHEMA_COMMIT=$(git rev-list -1 HEAD $CURRENT_SCHEMA_FILE)
+    PREVIOUS_SCHEMA_FINGERPRINT=$(fingerprint_schema $PREVIOUS_SCHEMA_FILE)
+  else
+    echo >$PREVIOUS_SCHEMA_FILE
+    PREVIOUS_SCHEMA_COMMIT=none
+    PREVIOUS_SCHEMA_FINGERPRINT=none
+  fi
+
+  echo "Last committed schema:"
+  echo "  - location: ${CURRENT_SCHEMA_FILE}@${PREVIOUS_SCHEMA_COMMIT}"
+  echo "  - fingerprint: ${PREVIOUS_SCHEMA_FINGERPRINT}"
+  echo
+
+  if [ "$CURRENT_SCHEMA_FINGERPRINT" = "$PREVIOUS_SCHEMA_FINGERPRINT" ]; then
+    echo "Error: current schema and last committed schema are the same. Please"
+    echo "run this tool before you commit the schema, then commit schema"
+    echo "and corresponding migration together."
+    echo
+    exit 1
+  fi
+  
+  ######################################################################
+
+  echo -n "Starting postgres docker container... "
+  docker run \
+         --name ${CONTAINER_NAME} \
+         --env POSTGRES_PASSWORD=postgres --detach \
+         --publish 127.0.0.1:15432:5432 \
+         postgres:13 >/dev/null
+
+  while ! docker exec ${CONTAINER_NAME} pg_isready -q; do sleep 0.5; done
+  sleep 0.5
+  echo "done."
+  echo
+
+  ######################################################################
+
+  echo -n "Creating databases and loading schemas... "
+  docker exec -t ${CONTAINER_NAME} createdb -U postgres db_previous
+  docker exec -i ${CONTAINER_NAME} psql -U postgres \
+         -v 'ON_ERROR_STOP=1' \
+         -1 \
+         db_previous \
+         <$PREVIOUS_SCHEMA_FILE >/dev/null 
+  docker exec -t ${CONTAINER_NAME} createdb -U postgres db_current
+  docker exec -i ${CONTAINER_NAME} psql -U postgres \
+         -v 'ON_ERROR_STOP=1' \
+         -1 \
+         db_current \
+         <$CURRENT_SCHEMA_FILE >/dev/null
+  echo "done."
+  echo
+
+  ######################################################################
+
+  MIGRATION_FILE=migrations/from_${PREVIOUS_SCHEMA_FINGERPRINT}_to_${CURRENT_SCHEMA_FINGERPRINT}.sql
+  echo -n "Diff'ing previous and current schema... "
+  # XXX why does migra exit with status code 2?
+  docker run --net host migra:local migra \
+         postgresql://postgres:postgres@localhost:15432/db_previous \
+         postgresql://postgres:postgres@localhost:15432/db_current >${MIGRATION_FILE} || true
+  echo "done."
+  echo
+
+  echo "Migration saved as: ${MIGRATION_FILE}"
+  echo
+}
+
+function cmd_test() {
+  local CURRENT_SCHEMA_FINGERPRINT
+  
+  if [ -z "$CURRENT_SCHEMA_FILE" ]; then 
+    CURRENT_SCHEMA_FILE=$1
+    if [ ! -e "$CURRENT_SCHEMA_FILE" ]; then
+      cmd_help
+      exit 1
+    fi
+  fi
+
+  CURRENT_SCHEMA_FINGERPRINT=$(fingerprint_schema $CURRENT_SCHEMA_FILE)
+  
+  echo "Checking migration chain..."
+
+  if verify_migration_chain $CURRENT_SCHEMA_FINGERPRINT; then
+    echo "Migration chain is ok."
+    echo
+  else
+    exit 1
+  fi
+}
+
+function verify_migration_chain() {
+  local MIGRATION_FILE
+  local TARGET_SCHEMA_FINGERPRINT
+  local SOURCE_SCHEMA_FINGERPRINT
+
+  TARGET_SCHEMA_FINGERPRINT=$1
+  
+  while true; do
+    MIGRATION_FILE=$(echo "migrations/from_*_to_${TARGET_SCHEMA_FINGERPRINT}.sql")
+
+    if [ ! -f $MIGRATION_FILE ]; then
+      echo "ERROR: Migration to schema $TARGET_SCHEMA_FINGERPRINT missing."
+      echo
+      return 1
+    fi
+
+    SOURCE_SCHEMA_FINGERPRINT=$(echo $MIGRATION_FILE | grep -Po "(?<=from_).+?(?=_to)")
+
+    if [ "$SOURCE_SCHEMA_FINGERPRINT" = "none" ]; then
+      break
+    fi
+
+    TARGET_SCHEMA_FINGERPRINT=$SOURCE_SCHEMA_FINGERPRINT
+  done
+}
+
+function fingerprint_schema() {
+  local SCHEMA_FILE=$1
+  ruby -rpg_query -e 'puts PgQuery.fingerprint(STDIN.read)' <$SCHEMA_FILE
+}
+
+function is_file_in_repo() {
+  local FILE=$1
+  git ls-files --error-unmatch $CURRENT_SCHEMA_FILE >/dev/null 2>&1
+}
+
+function dispatch_command() {
+  COMMAND=$1
+  case $COMMAND in
+    "" | "-h" | "--help")
+      cmd_help
+      ;;
+    test)
+      shift
+      cmd_test "$@"
+      ;;
+    generate)
+      shift
+      cmd_generate_migration "$@"
+      ;;
+    *)
+      echo "Error: '$COMMAND' not recognized." >&2
+      echo "       Run '$(basename $0) --help' for a list of commands." >&2
+      exit 1
+      ;;
+  esac
+}
+
+
+dispatch_command $@
