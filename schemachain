@@ -18,6 +18,7 @@ function cmd_generate_migration() {
   local PREVIOUS_SCHEMA_FINGERPRINT
   local PREVIOUS_SCHEMA_COMMIT
   local POSTGRES_URI
+  local POSTGRES_DATA_DIR
   local NEXT_MIGRATION_INDEX
 
   CURRENT_SCHEMA_FILE=$1
@@ -25,8 +26,7 @@ function cmd_generate_migration() {
     cmd_help
     exit 1
   fi
-  # XXX kill pg_tmp
-  # trap '' EXIT
+
   
   CURRENT_SCHEMA_FINGERPRINT=$(fingerprint_schema $CURRENT_SCHEMA_FILE)
   
@@ -74,6 +74,9 @@ function cmd_generate_migration() {
   export PGPORT=15432
   echo -n "Starting postgres... "
   POSTGRES_URI=$(pg_tmp.sh -w 5 -t -p 15432)
+  POSTGRES_DATA_DIR=$(psql $POSTGRES_URI --tuples-only -c 'SHOW data_directory')
+  trap "pg_ctl -D $POSTGRES_DATA_DIR stop" EXIT
+  
   echo "done."
   echo ${POSTGRES_URI}
 
