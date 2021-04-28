@@ -96,7 +96,9 @@ function cmd_generate_migration() {
 
   ######################################################################
 
-  MIGRATION_FILE=migrations/from_${PREVIOUS_SCHEMA_FINGERPRINT}_to_${CURRENT_SCHEMA_FINGERPRINT}.sql
+  NEXT_MIGRATION_INDEX=$(printf "%03d" $(get_next_migration_index migrations))
+  
+  MIGRATION_FILE=migrations/${NEXT_MIGRATION_INDEX}-from_${PREVIOUS_SCHEMA_FINGERPRINT}_to_${CURRENT_SCHEMA_FINGERPRINT}.sql
   echo -n "Diff'ing previous and current schemas... "
   # XXX why does migra exit with status code 2?
   docker run --net host migra:local migra --unsafe \
@@ -155,6 +157,12 @@ function verify_migration_chain() {
 
     TARGET_SCHEMA_FINGERPRINT=$SOURCE_SCHEMA_FINGERPRINT
   done
+}
+
+function get_next_migration_index() {
+  local MIGRATION_DIRECTORY
+  MIGRATION_DIRECTORY=$1
+  ls -1 $MIGRATION_DIRECTORY | egrep '[0-9]+-' | wc -l
 }
 
 function fingerprint_schema() {
