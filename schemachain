@@ -12,11 +12,11 @@ function cmd_help() {
 }
 
 function cmd_generate_migration() {
-  local CONTAINER_NAME
   local CURRENT_SCHEMA_FINGERPRINT
   local PREVIOUS_SCHEMA_FILE
   local PREVIOUS_SCHEMA_FINGERPRINT
   local PREVIOUS_SCHEMA_COMMIT
+  local POSTGRES_URI
   
   if [ -z "$CURRENT_SCHEMA_FILE" ]; then 
     CURRENT_SCHEMA_FILE=$1
@@ -25,10 +25,8 @@ function cmd_generate_migration() {
       exit 1
     fi
   fi
-  
-  CONTAINER_NAME=postgres-schema-container
-
-  trap 'docker rm --force --volumes ${CONTAINER_NAME} >/dev/null 2>/dev/null' EXIT
+  # XXX kill pg_tmp
+  # trap '' EXIT
   
   CURRENT_SCHEMA_FINGERPRINT=$(fingerprint_schema $CURRENT_SCHEMA_FILE)
   
@@ -72,44 +70,36 @@ function cmd_generate_migration() {
   
   ######################################################################
 
-  echo -n "Starting postgres docker container... "
-  docker run \
-         --name ${CONTAINER_NAME} \
-         --env POSTGRES_PASSWORD=postgres --detach \
-         --publish 127.0.0.1:15432:5432 \
-         postgres:13 >/dev/null
-
-  while ! docker exec ${CONTAINER_NAME} pg_isready -q; do sleep 0.5; done
-  sleep 0.5
+  export PGPORT=15432
+  echo -n "Starting postgres... "
+  POSTGRES_URI=$(pg_tmp.sh -w 5 -t -p 15432)
   echo "done."
-  echo
+  echo ${POSTGRES_URI}
 
   ######################################################################
 
   echo -n "Creating databases and loading schemas... "
-  docker exec -t ${CONTAINER_NAME} createdb -U postgres db_previous
-  docker exec -i ${CONTAINER_NAME} psql -U postgres \
-         -v 'ON_ERROR_STOP=1' \
-         -1 \
-         db_previous \
-         <$PREVIOUS_SCHEMA_FILE >/dev/null 
-  docker exec -t ${CONTAINER_NAME} createdb -U postgres db_current
-  docker exec -i ${CONTAINER_NAME} psql -U postgres \
-         -v 'ON_ERROR_STOP=1' \
-         -1 \
-         db_current \
-         <$CURRENT_SCHEMA_FILE >/dev/null
+  
+  psql "${POSTGRES_URI}" -c 'CREATE DATABASE db_previous;' >/dev/null 
+  psql "${POSTGRES_URI}" -c 'CREATE DATABASE db_current;' >/dev/null
+
+  DB_PREVIOUS_URI=$(echo $POSTGRES_URI | sed 's|/test|/db_previous|')
+  DB_CURRENT_URI=$(echo $POSTGRES_URI | sed 's|/test|/db_current|')
+  
+  psql "${DB_PREVIOUS_URI}" -v 'ON_ERROR_STOP=1' -1 \
+         <$PREVIOUS_SCHEMA_FILE >/dev/null
+  psql "${DB_CURRENT_URI}" -v 'ON_ERROR_STOP=1' -1 \
+         <$CURRENT_SCHEMA_FILE >/dev/null 
+  
   echo "done."
-  echo
 
   ######################################################################
 
   MIGRATION_FILE=migrations/from_${PREVIOUS_SCHEMA_FINGERPRINT}_to_${CURRENT_SCHEMA_FINGERPRINT}.sql
   echo -n "Diff'ing previous and current schema... "
   # XXX why does migra exit with status code 2?
-  docker run --net host migra:local migra \
-         postgresql://postgres:postgres@localhost:15432/db_previous \
-         postgresql://postgres:postgres@localhost:15432/db_current >${MIGRATION_FILE} || true
+  docker run --net host migra:local migra --unsafe \
+         "${DB_PREVIOUS_URI}" "${DB_CURRENT_URI}" >${MIGRATION_FILE} || true
   echo "done."
   echo
 
