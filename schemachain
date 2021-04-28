@@ -25,7 +25,7 @@ function cmd_generate_migration() {
       exit 1
     fi
   fi
-
+  
   CONTAINER_NAME=postgres-schema-container
 
   trap 'docker rm --force --volumes ${CONTAINER_NAME} >/dev/null 2>/dev/null' EXIT
@@ -37,6 +37,15 @@ function cmd_generate_migration() {
   echo "  - fingerprint: $CURRENT_SCHEMA_FINGERPRINT"
   echo
 
+  if ! does_file_have_changes $CURRENT_SCHEMA_FILE; then
+    echo "Error: current schema has no uncommitted changes; nothing to do."
+    echo 
+    echo "Please run this tool before committing changes to the schema file,"
+    echo "then commit schema changes and generated migration together."
+    echo
+    exit 1
+  fi
+  
   PREVIOUS_SCHEMA_FILE=/tmp/schema_previous.sql
 
   if is_file_in_repo $CURRENT_SCHEMA_FILE; then
@@ -55,9 +64,8 @@ function cmd_generate_migration() {
   echo
 
   if [ "$CURRENT_SCHEMA_FINGERPRINT" = "$PREVIOUS_SCHEMA_FINGERPRINT" ]; then
-    echo "Error: current schema and last committed schema are the same. Please"
-    echo "run this tool before you commit the schema, then commit schema"
-    echo "and corresponding migration together."
+    echo "Error: Current schema and last committed schema are equivalent."
+    echo "Nothing to do."
     echo
     exit 1
   fi
@@ -161,6 +169,16 @@ function verify_migration_chain() {
 function fingerprint_schema() {
   local SCHEMA_FILE=$1
   ruby -rpg_query -e 'puts PgQuery.fingerprint(STDIN.read)' <$SCHEMA_FILE
+}
+
+function does_file_have_changes() {
+  local FILE
+  FILE=$1
+  if git diff --exit-code $FILE >/dev/null; then
+    return 1
+  else
+    return 0
+  fi
 }
 
 function is_file_in_repo() {
