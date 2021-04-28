@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -eu
 
 function cmd_help() {
   echo "Usage: $(basename $0) <command> [options]"
@@ -12,18 +12,18 @@ function cmd_help() {
 }
 
 function cmd_generate_migration() {
+  local CURRENT_SCHEMA_FILE
   local CURRENT_SCHEMA_FINGERPRINT
   local PREVIOUS_SCHEMA_FILE
   local PREVIOUS_SCHEMA_FINGERPRINT
   local PREVIOUS_SCHEMA_COMMIT
   local POSTGRES_URI
-  
-  if [ -z "$CURRENT_SCHEMA_FILE" ]; then 
-    CURRENT_SCHEMA_FILE=$1
-    if [ ! -e "$CURRENT_SCHEMA_FILE" ]; then
-      cmd_help
-      exit 1
-    fi
+  local NEXT_MIGRATION_INDEX
+
+  CURRENT_SCHEMA_FILE=$1
+  if [ ! -e "$CURRENT_SCHEMA_FILE" ]; then
+    cmd_help
+    exit 1
   fi
   # XXX kill pg_tmp
   # trap '' EXIT
