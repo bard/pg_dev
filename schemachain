@@ -48,8 +48,8 @@ function cmd_generate_migration() {
     exit 1    
   else    
     PREVIOUS_SCHEMA_COMMIT=$(git rev-list -1 HEAD $CURRENT_SCHEMA_FILE)
-    PREVIOUS_SCHEMA_FINGERPRINT=$(fingerprint_schema $PREVIOUS_SCHEMA_FILE)
     git show ${PREVIOUS_SCHEMA_COMMIT}:${CURRENT_SCHEMA_FILE} >${PREVIOUS_SCHEMA_FILE}
+    PREVIOUS_SCHEMA_FINGERPRINT=$(fingerprint_schema $PREVIOUS_SCHEMA_FILE)
     
     if [ "$CURRENT_SCHEMA_FINGERPRINT" = "$PREVIOUS_SCHEMA_FINGERPRINT" ]; then
       echo "Error: Current schema and last committed schema are equivalent;"
