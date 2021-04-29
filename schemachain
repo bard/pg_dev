@@ -10,7 +10,7 @@ source "${SCHEMACHAIN_HOME}/schema.incl.bash"
 source "${SCHEMACHAIN_HOME}/postgres.incl.bash"
 source "${SCHEMACHAIN_HOME}/cmd_help.incl.bash"
 source "${SCHEMACHAIN_HOME}/cmd_check.incl.bash"
-source "${SCHEMACHAIN_HOME}/cmd_generate.incl.bash"
+source "${SCHEMACHAIN_HOME}/cmd_generate-migration.incl.bash"
 source "${SCHEMACHAIN_HOME}/dispatch.incl.bash"
 
 dispatch_command $@

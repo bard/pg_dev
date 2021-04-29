@@ -14,9 +14,9 @@ function dispatch_command() {
       shift
       cmd_check "$@"
       ;;
-    generate)
+    generate-migration)
       shift
-      cmd_generate "$@"
+      cmd_generate_migration "$@"
       ;;
     *)
       echo "Error: '$COMMAND' not recognized." >&2

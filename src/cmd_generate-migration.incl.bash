@@ -1,4 +1,4 @@
-function cmd_generate() {
+function cmd_generate_migration() {
   local CURRENT_SCHEMA_FILE
   local CURRENT_SCHEMA_FINGERPRINT
   local PREVIOUS_SCHEMA_FILE
@@ -98,7 +98,7 @@ function cmd_generate() {
 
   ######################################################################
 
-  if get_last_migration_file "$MIGRATION_DIRECTORY" | grep "-${CURRENT_SCHEMA_FINGERPRINT}.sql$" >/dev/null; then
+  if get_last_migration_file "$MIGRATION_DIRECTORY" | grep -e "-${CURRENT_SCHEMA_FINGERPRINT}.sql$" >/dev/null; then
     echo "Error: current schema is already covered by last existing migration."
     echo
     exit 1
