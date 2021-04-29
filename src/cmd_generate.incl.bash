@@ -16,6 +16,11 @@ function cmd_generate() {
     exit 1
   fi
 
+  if [ $# -eq 2 ]; then
+    NEXT_MIGRATION_INDEX=$(printf "%03d" $2)
+  else
+    NEXT_MIGRATION_INDEX=$(printf "%03d" $(get_next_migration_index migrations))
+  fi      
   
   CURRENT_SCHEMA_FINGERPRINT=$(fingerprint_schema <$CURRENT_SCHEMA_FILE)
   
@@ -84,8 +89,6 @@ function cmd_generate() {
   echo "done."
 
   ######################################################################
-
-  NEXT_MIGRATION_INDEX=$(printf "%03d" $(get_next_migration_index migrations))
 
   if get_last_migration_file | grep "-${CURRENT_SCHEMA_FINGERPRINT}.sql$" >/dev/null; then
     echo "Error: current schema is already covered by last existing migration."
