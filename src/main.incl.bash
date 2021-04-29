@@ -133,6 +133,11 @@ function does_repo_have_commits() {
 }
 
 function dispatch_command() {
+  if [ "$#" -eq 0 ]; then
+    cmd_help
+    exit 1
+  fi
+  
   COMMAND=$1
   case $COMMAND in
     "" | "-h" | "--help")
@@ -153,6 +158,5 @@ function dispatch_command() {
       ;;
   esac
 }
-
 
 dispatch_command $@
