@@ -1,6 +1,8 @@
 
 function get_last_migration_file() {
-  ls -1 migrations | tail -1
+  local MIGRATION_DIRECTORY
+  MIGRATION_DIRECTORY="$1"
+  ls -1 "$MIGRATION_DIRECTORY" | tail -1
 }
 
 function does_file_exist_in_history() {

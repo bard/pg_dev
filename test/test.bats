@@ -35,7 +35,7 @@ teardown() {
   touch migrations/004_none-abc123.sql
   touch migrations/005_abc123-def456.sql
   touch migrations/006_def456-ghi789.sql
-  test "$(get_last_migration_file)" = 006_def456-ghi789.sql
+  test "$(get_last_migration_file migrations)" = 006_def456-ghi789.sql
 }
 
 @test 'can check whether a file exists in git history' {

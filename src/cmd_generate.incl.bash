@@ -9,17 +9,25 @@ function cmd_generate() {
   local NEXT_MIGRATION_INDEX
   local LAST_MIGRATION_FILE
   local MIGRATION_FILE
+  local MIGRATION_DIRECTORY
 
+  if [ $# -lt 2 ]; then
+    cmd_help
+    exit 1
+  fi
+    
   CURRENT_SCHEMA_FILE=$1
-  if [ ! -e "$CURRENT_SCHEMA_FILE" ]; then
+  MIGRATION_DIRECTORY=$2
+
+  if [ ! -e "$CURRENT_SCHEMA_FILE" ] || [ ! -d "$MIGRATION_DIRECTORY" ]; then
     cmd_help
     exit 1
   fi
 
-  if [ $# -eq 2 ]; then
-    NEXT_MIGRATION_INDEX=$(printf "%03d" $2)
+  if [ $# -eq 3 ]; then
+    NEXT_MIGRATION_INDEX=$(printf "%03d" $3)
   else
-    NEXT_MIGRATION_INDEX=$(printf "%03d" $(get_next_migration_index migrations))
+    NEXT_MIGRATION_INDEX=$(printf "%03d" $(get_next_migration_index "$MIGRATION_DIRECTORY"))
   fi      
   
   CURRENT_SCHEMA_FINGERPRINT=$(fingerprint_schema <$CURRENT_SCHEMA_FILE)
@@ -90,13 +98,13 @@ function cmd_generate() {
 
   ######################################################################
 
-  if get_last_migration_file | grep "-${CURRENT_SCHEMA_FINGERPRINT}.sql$" >/dev/null; then
+  if get_last_migration_file "$MIGRATION_DIRECTORY" | grep "-${CURRENT_SCHEMA_FINGERPRINT}.sql$" >/dev/null; then
     echo "Error: current schema is already covered by last existing migration."
     echo
     exit 1
   fi
   
-  MIGRATION_FILE=migrations/${NEXT_MIGRATION_INDEX}_${PREVIOUS_SCHEMA_FINGERPRINT}-${CURRENT_SCHEMA_FINGERPRINT}.sql
+  MIGRATION_FILE=${MIGRATION_DIRECTORY}/${NEXT_MIGRATION_INDEX}_${PREVIOUS_SCHEMA_FINGERPRINT}-${CURRENT_SCHEMA_FINGERPRINT}.sql
   echo -n "Diff'ing previous and current schemas... "
   # XXX why does migra exit with status code 2?
   
