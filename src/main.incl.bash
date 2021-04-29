@@ -1,8 +1,8 @@
 set -eu
 
-source "${BASH_SOURCE%/*}/migration_utils.incl.bash"
-source "${BASH_SOURCE%/*}/repo_utils.incl.bash"
-source "${BASH_SOURCE%/*}/schema_utils.incl.bash"
+source "${BASH_SOURCE%/*}/migrations.incl.bash"
+source "${BASH_SOURCE%/*}/repo.incl.bash"
+source "${BASH_SOURCE%/*}/schema.incl.bash"
 source "${BASH_SOURCE%/*}/postgres.incl.bash"
 source "${BASH_SOURCE%/*}/cmd_help.incl.bash"
 source "${BASH_SOURCE%/*}/cmd_check.incl.bash"

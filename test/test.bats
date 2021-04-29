@@ -5,9 +5,9 @@ setup() {
   cd $WORKDIR
   PROJECT_ROOT="$(cd "$(dirname "$BATS_TEST_FILENAME" )/.." >/dev/null 2>&1 && pwd)"
   echo $PROJECT_ROOT
-  source $PROJECT_ROOT/src/migration_utils.incl.bash
-  source $PROJECT_ROOT/src/repo_utils.incl.bash
-  source $PROJECT_ROOT/src/schema_utils.incl.bash
+  source $PROJECT_ROOT/src/migrations.incl.bash
+  source $PROJECT_ROOT/src/repo.incl.bash
+  source $PROJECT_ROOT/src/schema.incl.bash
 }
 
 teardown() {
