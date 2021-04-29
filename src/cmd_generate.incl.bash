@@ -1,13 +1,4 @@
-set -eu
-
-source "${BASH_SOURCE%/*}/migrations.incl.bash"
-source "${BASH_SOURCE%/*}/repo.incl.bash"
-source "${BASH_SOURCE%/*}/schema.incl.bash"
-source "${BASH_SOURCE%/*}/postgres.incl.bash"
-source "${BASH_SOURCE%/*}/cmd_help.incl.bash"
-source "${BASH_SOURCE%/*}/cmd_check.incl.bash"
-
-function cmd_generate_migration() {
+function cmd_generate() {
   local CURRENT_SCHEMA_FILE
   local CURRENT_SCHEMA_FINGERPRINT
   local PREVIOUS_SCHEMA_FILE
@@ -106,57 +97,10 @@ function cmd_generate_migration() {
   echo -n "Diff'ing previous and current schemas... "
   # XXX why does migra exit with status code 2?
   
-  migra --unsafe "${DB_PREVIOUS_URI}" "${DB_CURRENT_URI}" >${MIGRATION_FILE} 
+  migra --unsafe "${DB_PREVIOUS_URI}" "${DB_CURRENT_URI}" >${MIGRATION_FILE} || true
   echo "done."
   echo
 
   echo "Migration saved as: ${MIGRATION_FILE}"
   echo
 }
-
-function get_last_migration_file() {
-  ls -1 migrations | tail -1
-}
-
-function does_file_have_changes() {
-  local FILE
-  FILE=$1
-  if git diff --exit-code $FILE >/dev/null; then
-    return 1
-  else
-    return 0
-  fi
-}
-
-function does_repo_have_commits() {
-  test "$(git rev-parse HEAD 2>/dev/null)" != "HEAD"
-}
-
-function dispatch_command() {
-  if [ "$#" -eq 0 ]; then
-    cmd_help
-    exit 1
-  fi
-  
-  COMMAND=$1
-  case $COMMAND in
-    "" | "-h" | "--help")
-      cmd_help
-      ;;
-    check)
-      shift
-      cmd_check "$@"
-      ;;
-    generate)
-      shift
-      cmd_generate_migration "$@"
-      ;;
-    *)
-      echo "Error: '$COMMAND' not recognized." >&2
-      echo "       Run '$(basename $0) --help' for a list of commands." >&2
-      exit 1
-      ;;
-  esac
-}
-
-dispatch_command $@

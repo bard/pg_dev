@@ -30,13 +30,40 @@ teardown() {
   test "$(get_next_migration_index migrations)" = 7
 }
 
+@test 'can retrieve name of last migration file' {
+  mkdir migrations
+  touch migrations/004_none-abc123.sql
+  touch migrations/005_abc123-def456.sql
+  touch migrations/006_def456-ghi789.sql
+  test "$(get_last_migration_file)" = 006_def456-ghi789.sql
+}
+
 @test 'can check whether a file exists in git history' {
   git init
-  does_file_exist_in_history foo.txt || true
+  does_file_exist_in_history foo.txt && false
   touch foo.txt
   git add foo.txt
   git commit -m.
   does_file_exist_in_history foo.txt && true
+}
+
+@test 'can check whether a repo has any commits at all' {
+  git init
+  does_repo_have_commits && false
+  touch foo.txt
+  git add foo.txt
+  git commit -m.
+  does_repo_have_commits && true
+}
+
+@test 'can check whether file has uncommitted changes' {
+  git init
+  touch foo.txt
+  git add foo.txt
+  git commit -m.
+  does_file_have_changes foo.txt && false
+  echo bar >foo.txt
+  does_file_have_changes foo.txt && true  
 }
 
 @test 'can fingerprint a schema' {
