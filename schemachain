@@ -2,6 +2,8 @@
 
 set -eu
 
+source ./src/get_next_migration_index.incl.bash
+
 function cmd_help() {
   echo "Usage: $(basename $0) <command> [options]"
   echo
@@ -168,12 +170,6 @@ function cmd_check() {
 
 function get_last_migration_file() {
   ls -1 migrations | tail -1
-}
-
-function get_next_migration_index() {
-  local MIGRATION_DIRECTORY
-  MIGRATION_DIRECTORY=$1
-  ls -1 $MIGRATION_DIRECTORY | egrep '^[0-9]+_' | wc -l
 }
 
 function fingerprint_schema() {
