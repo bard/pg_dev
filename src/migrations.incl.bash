@@ -11,3 +11,8 @@ function get_next_migration_index {
   echo $((LAST_INDEX + 1))
 }
 
+function get_migration_target_fingerprint {
+  local MIGRATION_FILENAME
+  MIGRATION_FILENAME="$1"
+  echo $MIGRATION_FILENAME | grep -Po '(?<=-)[0-9a-f]+(?=\.sql$)' 
+}

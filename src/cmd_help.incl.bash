@@ -3,6 +3,6 @@ function cmd_help() {
   echo
   echo "Commands:"
   echo "  generate-migration SCHEMA_FILE MIGRATION_DIR - generate migration from unstaged schema"
-  echo "  check schema.sql    - check that schema matches latest migration"
+  echo "  status SCHEMA_FILE MIGRATION_DIR             - sanity check"
   echo
 }

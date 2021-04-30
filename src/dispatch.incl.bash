@@ -18,6 +18,10 @@ function dispatch_command() {
       shift
       cmd_generate_migration "$@"
       ;;
+    status)
+      shift
+      cmd_status "$@"
+      ;;
     *)
       echo "Error: command '$COMMAND' not recognized." >&2
       echo "Run '$(basename $0) --help' for a list of commands." >&2

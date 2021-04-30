@@ -24,3 +24,15 @@ function does_file_have_changes() {
   fi
 }
 
+function read_last_committed_version() {
+  local FILE
+  local COMMIT
+  FILE=$1
+
+  if ! does_file_exist_in_history "$FILE"; then
+    return 1
+  fi
+
+  COMMIT=$(git rev-list -1 HEAD "$FILE")
+  git show "${COMMIT}:${FILE}"
+}
