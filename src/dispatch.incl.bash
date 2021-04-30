@@ -19,8 +19,8 @@ function dispatch_command() {
       cmd_generate_migration "$@"
       ;;
     *)
-      echo "Error: '$COMMAND' not recognized." >&2
-      echo "       Run '$(basename $0) --help' for a list of commands." >&2
+      echo "Error: command '$COMMAND' not recognized." >&2
+      echo "Run '$(basename $0) --help' for a list of commands." >&2
       exit 1
       ;;
   esac
