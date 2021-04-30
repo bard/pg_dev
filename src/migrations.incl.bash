@@ -8,7 +8,7 @@ function get_next_migration_index {
   local LAST_INDEX
   MIGRATION_DIRECTORY="$1"
   LAST_INDEX=$(find "$MIGRATION_DIRECTORY" -maxdepth 1 -printf '%f\n'  | grep -Po '^\d+(?=_)' | get_max_number)
-  echo $((LAST_INDEX + 1))
+  echo $((10#$LAST_INDEX + 1))
 }
 
 function get_migration_target_fingerprint {

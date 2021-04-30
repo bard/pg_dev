@@ -26,9 +26,17 @@ teardown() {
 @test 'can get next index when migration files start from index greater than one' {
   mkdir migrations
   touch migrations/004_none-abc123.sql
+  test "$(get_next_migration_index migrations)" = 5
+  
   touch migrations/005_abc123-def456.sql
   touch migrations/006_def456-ghi789.sql
   test "$(get_next_migration_index migrations)" = 7
+}
+
+@test 'can get next index in a directory with bigger numbers' {
+  mkdir migrations
+  touch migrations/014_none-6dd578ee10c5d5e5.sql
+  test "$(get_next_migration_index migrations)" = 15
 }
 
 @test 'can read target fingerprint from a migration filename' {
