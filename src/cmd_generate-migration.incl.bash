@@ -73,21 +73,16 @@ function cmd_generate_migration() {
   
   ######################################################################
 
-  export PGPORT=15432
-  echo -n "Starting postgres... "
-  POSTGRES_URI=$(run_postgres_tmp)
+  echo -n "Starting postgres servers... "
+
+  DB_PREVIOUS_URI=$(run_postgres_tmp)
+  DB_CURRENT_URI=$(run_postgres_tmp)
+
   echo "done."
-  echo ${POSTGRES_URI}
 
   ######################################################################
 
   echo -n "Creating databases and loading schemas... "
-  
-  psql "${POSTGRES_URI}" -c 'CREATE DATABASE db_previous;' >/dev/null 
-  psql "${POSTGRES_URI}" -c 'CREATE DATABASE db_current;' >/dev/null
-
-  DB_PREVIOUS_URI=$(echo $POSTGRES_URI | sed 's|/test|/db_previous|')
-  DB_CURRENT_URI=$(echo $POSTGRES_URI | sed 's|/test|/db_current|')
   
   psql "${DB_PREVIOUS_URI}" -v 'ON_ERROR_STOP=1' -1 \
          <$PREVIOUS_SCHEMA_FILE >/dev/null
