@@ -9,12 +9,11 @@ RUN apt-get update && \
     cd /tmp && wget https://github.com/eradman/ephemeralpg/archive/refs/tags/3.1.tar.gz && tar zxf 3.1.tar.gz && cd ephemeralpg-3.1 && make install && \
     apt-get -y remove build-essential ruby-dev && apt-get -y autoremove && apt-get clean && rm -rf /tmp/* /var/tmp/* 
 
-COPY docker-entrypoint.sh /docker-entrypoint.sh
 COPY src/ /usr/local/lib/schemachain
 COPY schemachain /tmp/schemachain.tmp
 RUN sed -e 's|^SCHEMACHAIN_HOME=.*$|SCHEMACHAIN_HOME=/usr/local/lib/schemachain|' \
     </tmp/schemachain.tmp >/usr/local/bin/schemachain && \
     chmod +x /usr/local/bin/schemachain
-WORKDIR /repo
 
-ENTRYPOINT ["/docker-entrypoint.sh"]
+WORKDIR /repo
+ENTRYPOINT []
