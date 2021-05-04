@@ -1,3 +1,3 @@
 function fingerprint_schema() {
-  ruby -rpg_query -e 'puts PgQuery.fingerprint(STDIN.read)'
+  python3 -c 'import sys; from pglast.parser import fingerprint; print(fingerprint(sys.stdin.read()))'
 }
