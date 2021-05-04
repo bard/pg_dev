@@ -28,7 +28,7 @@ However, schemachain is only distributed as docker container, so that becomes:
 ```sh
 $ docker run \
   --user "$(id -u):$(id -g)" -v /etc/passwd:/etc/passwd:ro -v $(pwd):/repo schemachain:latest \
-  schemachain generate db/schema_file.sql db/migrations_dir
+  schemachain generate-migration db/schema_file.sql db/migrations_dir
 ```
 
 As that's lengthy, you might want to place it in a `Makefile` target, `package.json` script, or equivalent, and invoke it with `make migrate`, `npx migrate`, etc.
