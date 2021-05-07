@@ -14,6 +14,12 @@ function cmd_status() {
   MIGRATION_DIRECTORY=$2
 
   echo
+    
+  if [ ! -r $SCHEMA_FILENAME ]; then
+    echo " - File does not exist or cannot be read: ${SCHEMA_FILENAME}"
+    return 1
+  fi
+
   if ! does_file_exist_in_history "$SCHEMA_FILENAME"; then
     echo " - Schema file $SCHEMA_FILENAME present in work tree but absent from git"
     echo "   history."
