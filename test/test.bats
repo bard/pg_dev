@@ -110,6 +110,29 @@ teardown() {
   test $status -eq 0
 }
 
+@test 'can cat schema version from which a migration was created' {
+  git init
+  mkdir migrations
+  
+  echo 'CREATE TABLE users (id INTEGER, name TEXT);' >schema.sql
+  touch migrations/001_none-628c46f278dd3da2.sql
+  git add schema.sql migrations/*
+  git commit -m.
+
+  echo 'CREATE TABLE widgets (id INTEGER, name TEXT);' >>schema.sql
+  git add schema.sql
+  git commit -m.
+
+  echo 'CREATE TABLE vehicles (id INTEGER, name TEXT);' >>schema.sql
+  git add schema.sql
+  git commit -m.
+
+  run cat_schema_version_with_fingerprint schema.sql 628c46f278dd3da2
+  test $status -eq 0
+  echo "$output" | grep -v widgets
+  echo "$output" | grep -v vehicles
+}
+
 @test 'can report status' {
   mkdir migrations
   git init

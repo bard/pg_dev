@@ -24,6 +24,29 @@ function does_file_have_changes() {
   fi
 }
 
+function cat_schema_version_with_fingerprint() {
+  local SCHEMA_FILE
+  local TARGET_FINGERPRINT
+  local FINGERPRINT_AT_COMMIT
+  local TARGET_COMMIT
+  SCHEMA_FILE="$1"
+  TARGET_FINGERPRINT="$2"
+
+  git log -- "$SCHEMA_FILE" | grep ^commit | cut -d' ' -f2 | while read COMMIT; do
+    FINGERPRINT_AT_COMMIT=$(git show "${COMMIT}:${SCHEMA_FILE}" | fingerprint_schema)
+    if [ "$FINGERPRINT_AT_COMMIT" = "$TARGET_FINGERPRINT" ]; then
+      TARGET_COMMIT="$COMMIT"
+      break
+    fi
+  done
+
+  if [ -n "$TARGET_COMMIT" ]; then
+    return 1
+  else
+    git show "${COMMIT}:${SCHEMA_FILE}"
+  fi
+}
+
 function read_last_committed_version() {
   local FILE
   local COMMIT
