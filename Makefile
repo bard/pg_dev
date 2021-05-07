@@ -2,9 +2,16 @@ test:
 	bats -t test/test.bats
 
 test-watch:
-	nodemon -w src -w test -e bash,bats --exec 'bats -t test/*.bats'
+	nodemon -w src -w test -e bash,bats --exec 'clear; bats -t test/*.bats'
 
-build-docker:
+dist/schemachain: src/*.incl.bash
+	mkdir dist
+	(echo -e '#!/bin/bash\nset -eu\n'; cat src/*.incl.bash; echo 'dispatch_command $$@') >$@
+	chmod +x $@
+
+build-docker: dist/schemachain
 	docker build . -t schemachain:latest
 
-.PHONY: test test-watch build-docker
+build: dist/schemachain
+
+.PHONY: test test-watch build build-docker build-docker-watch

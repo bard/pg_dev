@@ -13,11 +13,6 @@ RUN apt-get update && \
     apt-get -y autoremove && \
     apt-get clean && rm -rf /tmp/* /var/tmp/* 
 
-COPY src/ /usr/local/lib/schemachain
-COPY schemachain /tmp/schemachain.tmp
-RUN sed -e 's|^SCHEMACHAIN_HOME=.*$|SCHEMACHAIN_HOME=/usr/local/lib/schemachain|' \
-    </tmp/schemachain.tmp >/usr/local/bin/schemachain && \
-    chmod +x /usr/local/bin/schemachain
-
+COPY dist/schemachain /usr/local/bin/schemachain
 WORKDIR /repo
 ENTRYPOINT []
