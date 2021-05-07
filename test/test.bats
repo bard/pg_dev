@@ -99,6 +99,18 @@ teardown() {
   test $(echo $SCHEMA1 | fingerprint_schema) = $(echo $SCHEMA2 | fingerprint_schema)
 }
 
+@test 'can detect whether schema is up to date' {
+  mkdir migrations  
+  echo 'CREATE TABLE users (id INTEGER, name TEXT);' >schema.sql
+  
+  run check_schema_up_to_date schema.sql migrations
+  test $status -eq 1
+
+  touch migrations/001_none-628c46f278dd3da2.sql
+  run check_schema_up_to_date schema.sql migrations
+  test $status -eq 0
+}
+
 @test 'can report status' {
   mkdir migrations
   git init
