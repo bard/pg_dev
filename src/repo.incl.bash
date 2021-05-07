@@ -36,3 +36,37 @@ function read_last_committed_version() {
   COMMIT=$(git rev-list -1 HEAD "$FILE")
   git show "${COMMIT}:${FILE}"
 }
+
+
+function get_next_migration_index {
+  local MIGRATION_DIRECTORY
+  local LAST_INDEX
+  MIGRATION_DIRECTORY="$1"
+  LAST_INDEX=$(find "$MIGRATION_DIRECTORY" -maxdepth 1 -printf '%f\n'  | grep -Po '^\d+(?=_)' | get_max_number)
+  echo $((10#$LAST_INDEX + 1))
+}
+
+function get_migration_target_fingerprint {
+  local MIGRATION_FILENAME
+  MIGRATION_FILENAME="$1"
+  echo $MIGRATION_FILENAME | grep -Po '(?<=-)[0-9a-f]+(?=\.sql$)' 
+}
+
+function fingerprint_schema() {
+  python3 -c 'import sys; from pglast.parser import fingerprint; print(fingerprint(sys.stdin.read()))'
+}
+
+function check_schema_up_to_date() {
+  local SCHEMA_FILE
+  local MIGRATION_DIRECTORY
+  local SCHEMA_FINGERPRINT
+  local LAST_MIGRATION_FILE
+  local LAST_MIGRATION_FINGERPRINT
+  SCHEMA_FILE="$1"
+  MIGRATION_DIRECTORY="$2"
+
+  SCHEMA_FINGERPRINT=$(fingerprint_schema < "$SCHEMA_FILE")  
+  LAST_MIGRATION_FILE=$(get_last_migration_file "$MIGRATION_DIRECTORY")
+  LAST_MIGRATION_FINGERPRINT=$(get_migration_target_fingerprint "$LAST_MIGRATION_FILE")
+  test "$SCHEMA_FINGERPRINT" = "$LAST_MIGRATION_FINGERPRINT"
+}

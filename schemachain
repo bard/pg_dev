@@ -4,9 +4,8 @@ set -eu
 
 SCHEMACHAIN_HOME=${BASH_SOURCE%/*}/src
 
-source "${SCHEMACHAIN_HOME}/migrations.incl.bash"
 source "${SCHEMACHAIN_HOME}/repo.incl.bash"
-source "${SCHEMACHAIN_HOME}/schema.incl.bash"
+source "${SCHEMACHAIN_HOME}/util.incl.bash"
 source "${SCHEMACHAIN_HOME}/postgres.incl.bash"
 source "${SCHEMACHAIN_HOME}/cmd_help.incl.bash"
 source "${SCHEMACHAIN_HOME}/cmd_check.incl.bash"
