@@ -19,7 +19,7 @@ function cmd_status() {
     echo "   history."
     echo "   Run 'generate-migration' to generate the initial migration, then"
     echo "   commit both the schema and the migration file."
-    return 0
+    return 1
   fi
   
   WORKTREE_SCHEMA_FINGERPRINT=$(fingerprint_schema <$SCHEMA_FILENAME)
@@ -36,6 +36,7 @@ function cmd_status() {
     if [ "$LAST_MIGRATION_FINGERPRINT" != "$WORKTREE_SCHEMA_FINGERPRINT" ]; then
       echo " - Last migration does not cover latest changes. Remember to run '$(basename $0) generate-migration $SCHEMA_FILENAME $MIGRATION_DIRECTORY' before committing schema changes."
     fi
+    return 1
   fi
   echo
 
