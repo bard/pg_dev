@@ -15,7 +15,7 @@ function validate_args() {
   fi
 }
 
-function cmd_generate_migration_new() {
+function cmd_generate_migration() {
   local SCHEMA_FILE
   local MIGRATION_DIRECTORY
   local LAST_MIGRATION_FILE

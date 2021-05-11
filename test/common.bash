@@ -9,7 +9,7 @@ setup() {
   source $PROJECT_ROOT/src/postgres.incl.bash
   source $PROJECT_ROOT/src/cmd_help.incl.bash
   source $PROJECT_ROOT/src/cmd_status.incl.bash
-  source $PROJECT_ROOT/src/cmd_generate_migration_new.incl.bash
+  source $PROJECT_ROOT/src/cmd_generate_migration.incl.bash
 }
 
 teardown() {

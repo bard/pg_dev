@@ -9,7 +9,7 @@ source ./test/common.bash
   mkdir migrations 
   echo 'CREATE TABLE users (id INTEGER, name TEXT);' >schema.sql
 
-  NO_START_PG=1 run cmd_generate_migration_new schema.sql migrations
+  NO_START_PG=1 run cmd_generate_migration schema.sql migrations
   test $status -eq 0
   echo "$output" | grep --fixed-strings "Schema file name: schema.sql"
   echo "$output" | grep --fixed-strings "Migration directory: migrations"
@@ -24,7 +24,7 @@ source ./test/common.bash
 
   echo 'CREATE TABLE users (id INTEGER, name TEXT);' >schema.sql
   touch migrations/000_none-628c46f278dd3da2.sql  
-  NO_START_PG=1 run cmd_generate_migration_new schema.sql migrations
+  NO_START_PG=1 run cmd_generate_migration schema.sql migrations
   test $status -eq 0
   echo "$output" | grep --fixed-strings "Schema and last migration match, nothing to do."
 }
@@ -35,7 +35,7 @@ source ./test/common.bash
   
   echo 'CREATE TABLE users (id INTEGER, name TEXT);' >schema.sql
 
-  NO_START_PG=1 run cmd_generate_migration_new schema.sql migrations
+  NO_START_PG=1 run cmd_generate_migration schema.sql migrations
   test $status -eq 0
   echo "$output" | grep --fixed-strings "Last migrated schema fingerprint: none"
 
@@ -48,7 +48,7 @@ source ./test/common.bash
   
   echo 'CREATE TABLE users (id INTEGER, name TEXT);' >schema.sql
 
-  run cmd_generate_migration_new schema.sql migrations
+  run cmd_generate_migration schema.sql migrations
   test $status -eq 0
 
   test -f migrations/000_none-628c46f278dd3da2.sql
@@ -62,7 +62,7 @@ source ./test/common.bash
   git add schema.sql
   git commit -m.
 
-  NO_START_PG=1 run cmd_generate_migration_new schema.sql migrations
+  NO_START_PG=1 run cmd_generate_migration schema.sql migrations
   test -f migrations/000_none-628c46f278dd3da2.sql
 
   echo 'CREATE TABLE widgets (id INTEGER, name TEXT);' >>schema.sql
@@ -73,7 +73,7 @@ source ./test/common.bash
   git add schema.sql
   git commit -m.
 
-  NO_START_PG=1 run cmd_generate_migration_new schema.sql migrations
+  NO_START_PG=1 run cmd_generate_migration schema.sql migrations
   test $status -eq 0
   test -f migrations/001_628c46f278dd3da2-376ef48bf0288477.sql
 }
@@ -86,7 +86,7 @@ source ./test/common.bash
   git add schema.sql
   git commit -m.
 
-  run cmd_generate_migration_new schema.sql migrations
+  run cmd_generate_migration schema.sql migrations
   test -f migrations/000_none-628c46f278dd3da2.sql
 
   echo 'CREATE TABLE widgets (id INTEGER, name TEXT);' >>schema.sql
@@ -97,7 +97,7 @@ source ./test/common.bash
   git add schema.sql
   git commit -m.
 
-  run cmd_generate_migration_new schema.sql migrations
+  run cmd_generate_migration schema.sql migrations
   echo "$output"
   test $status -eq 0
   test -f migrations/001_628c46f278dd3da2-376ef48bf0288477.sql

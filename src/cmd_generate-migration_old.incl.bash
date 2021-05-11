@@ -1,4 +1,4 @@
-function cmd_generate_migration() {
+function cmd_generate_migration_old() {
   local CURRENT_SCHEMA_FILE
   local CURRENT_SCHEMA_FINGERPRINT
   local PREVIOUS_SCHEMA_FILE

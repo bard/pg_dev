@@ -14,13 +14,13 @@ function dispatch_command() {
       shift
       cmd_check "$@"
       ;;
+    generate-migration-old)
+      shift
+      cmd_generate_migration_old "$@"
+      ;;
     generate-migration)
       shift
       cmd_generate_migration "$@"
-      ;;
-    generate-migration-new)
-      shift
-      cmd_generate_migration_new "$@"
       ;;
     status)
       shift
