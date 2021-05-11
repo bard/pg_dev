@@ -25,6 +25,7 @@ function cmd_generate_migration() {
   local DB_PREVIOUS_URI
   local DB_CURRENT_URI
   local LAST_SCHEMA_FILE
+  local NO_START_PG=${NO_START_PG:-0}
   
   validate_args "$1" "$2"
 
@@ -41,7 +42,7 @@ function cmd_generate_migration() {
   
   if [ -z "$LAST_MIGRATION_FILE" ]; then
     NEXT_MIGRATION_FILE="$MIGRATION_DIRECTORY/000_${PREVIOUS_SCHEMA_FINGERPRINT:-none}-${CURRENT_SCHEMA_FINGERPRINT}.sql"
-    if [ -n "$NO_START_PG" ]; then
+    if [ "$NO_START_PG" -eq 1 ]; then
       touch $NEXT_MIGRATION_FILE
     else
       LAST_SCHEMA_FILE=/tmp/schemachain-last_schema.sql
