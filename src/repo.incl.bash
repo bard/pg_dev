@@ -32,18 +32,19 @@ function cat_schema_version_with_fingerprint() {
   SCHEMA_FILE="$1"
   TARGET_FINGERPRINT="$2"
 
-  git log -- "$SCHEMA_FILE" | grep ^commit | cut -d' ' -f2 | while read COMMIT; do
+  TARGET_COMMIT=""
+  while read COMMIT; do
     FINGERPRINT_AT_COMMIT=$(git show "${COMMIT}:${SCHEMA_FILE}" | fingerprint_schema)
     if [ "$FINGERPRINT_AT_COMMIT" = "$TARGET_FINGERPRINT" ]; then
       TARGET_COMMIT="$COMMIT"
       break
     fi
-  done
+  done <<< $(git log -- "$SCHEMA_FILE" | grep ^commit | cut -d' ' -f2)
 
-  if [ -n "$TARGET_COMMIT" ]; then
+  if [ -z "$TARGET_COMMIT" ]; then
     return 1
   else
-    git show "${COMMIT}:${SCHEMA_FILE}"
+    git show "${TARGET_COMMIT}:${SCHEMA_FILE}"
   fi
 }
 

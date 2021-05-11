@@ -117,7 +117,12 @@ source ./test/common.bash
 
   run cat_schema_version_with_fingerprint schema.sql 628c46f278dd3da2
   test $status -eq 0
-  echo "$output" | grep -v widgets
-  echo "$output" | grep -v vehicles
+  echo "$output" | grep users
+  if echo "$output" | grep widgets; then
+    return 1
+  fi
+  if echo "$output" | grep vehicles; then
+    return 1
+  fi
 }
 

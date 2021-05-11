@@ -15,7 +15,6 @@ source ./test/common.bash
   echo "$output" | grep --fixed-strings "Migration directory: migrations"
   echo "$output" | grep --fixed-strings "Current schema fingerprint: 628c46f278dd3da2"
   echo "$output" | grep --fixed-strings "Last migrated schema fingerprint: none"
-  echo "$output" | grep --fixed-strings "Last migrated schema commit: none"
 }
 
 @test '[cmd] generate-migration does nothing when current schema already matches last migration' {
@@ -54,6 +53,7 @@ source ./test/common.bash
   test $status -eq 0
 
   test -f migrations/000_none-628c46f278dd3da2.sql
+  # XXX TODO assert migration content
 }
 
 @test '[cmd] generate-migration produces migration from last migrated schema to current schema [dryrun]' {
@@ -100,8 +100,10 @@ source ./test/common.bash
   git commit -m.
 
   run cmd_generate_migration schema.sql migrations
-  echo "$output"
   test $status -eq 0
+  
   test -f migrations/001_628c46f278dd3da2-376ef48bf0288477.sql
+  cat migrations/001_628c46f278dd3da2-376ef48bf0288477.sql | grep --fixed-strings 'create table "public"."widgets" ('
+  cat migrations/001_628c46f278dd3da2-376ef48bf0288477.sql | grep --fixed-strings  'create table "public"."vehicles" ('
 }
 

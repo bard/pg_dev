@@ -1,3 +1,4 @@
+set -ue
 
 setup() {
   WORKDIR=$(mktemp -d -t schemachain-test_XXXXXXXXXX)

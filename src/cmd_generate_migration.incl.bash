@@ -34,21 +34,20 @@ function cmd_generate_migration() {
   CURRENT_SCHEMA_FINGERPRINT=$(fingerprint_schema <$SCHEMA_FILE)  
   LAST_MIGRATION_FILE="$(get_last_migration_file $MIGRATION_DIRECTORY)"
   LAST_MIGRATION_FINGERPRINT="$(get_migration_target_fingerprint ${LAST_MIGRATION_FILE})"
-
+  
   echo "Schema file name: ${SCHEMA_FILE}"
   echo "Migration directory: ${MIGRATION_DIRECTORY}"
   echo "Current schema fingerprint: ${CURRENT_SCHEMA_FINGERPRINT}"
   echo "Last migration file: ${LAST_MIGRATION_FILE}"
   echo "Last migrated schema fingerprint: ${LAST_MIGRATION_FINGERPRINT:-none}"
-  echo "Last migrated schema commit: ${PREVIOUS_SCHEMA_COMMIT:-none}"
-  
+
   if [ -z "$LAST_MIGRATION_FILE" ]; then
     NEXT_MIGRATION_FILE="$MIGRATION_DIRECTORY/000_${PREVIOUS_SCHEMA_FINGERPRINT:-none}-${CURRENT_SCHEMA_FINGERPRINT}.sql"
     if [ "$NO_START_PG" -eq 1 ]; then
       touch $NEXT_MIGRATION_FILE
     else
       LAST_SCHEMA_FILE=/tmp/schemachain-last_schema.sql
-      touch $LAST_SCHEMA_FILE
+      cat_schema_version_with_fingerprint "$SCHEMA_FILE" "$LAST_MIGRATION_FINGERPRINT" >${LAST_SCHEMA_FILE}
       echo -n "Starting postgres servers... "
       DB_PREVIOUS_URI=$(run_postgres_tmp)
       DB_CURRENT_URI=$(run_postgres_tmp)
@@ -63,19 +62,17 @@ function cmd_generate_migration() {
       migra --unsafe "${DB_PREVIOUS_URI}" "${DB_CURRENT_URI}" >${NEXT_MIGRATION_FILE}
       echo "done."
     fi
-  else 
-    LAST_MIGRATION_FINGERPRINT="$(get_migration_target_fingerprint $LAST_MIGRATION_FILE)"
-
+  else
     if [ "$LAST_MIGRATION_FINGERPRINT" = "$CURRENT_SCHEMA_FINGERPRINT" ]; then
       echo "Schema and last migration match, nothing to do."
-    else 
+    else      
       NEXT_MIGRATION_INDEX=$(printf "%03d" $(get_next_migration_index "$MIGRATION_DIRECTORY"))
       NEXT_MIGRATION_FILE="$MIGRATION_DIRECTORY/${NEXT_MIGRATION_INDEX}_${LAST_MIGRATION_FINGERPRINT}-${CURRENT_SCHEMA_FINGERPRINT}.sql"
-      if [ -n "$NO_START_PG" ]; then
+      if [ "$NO_START_PG" -eq 1 ]; then
         touch $NEXT_MIGRATION_FILE
       else
         LAST_SCHEMA_FILE=/tmp/schemachain-last_schema.sql
-        cat_schema_version_with_fingerprint $LAST_MIGRATION_FINGERPRINT >${LAST_SCHEMA_FILE}
+        cat_schema_version_with_fingerprint $SCHEMA_FILE $LAST_MIGRATION_FINGERPRINT >${LAST_SCHEMA_FILE}
 
         echo -n "Starting postgres servers... "
         DB_PREVIOUS_URI=$(run_postgres_tmp)
@@ -88,7 +85,7 @@ function cmd_generate_migration() {
         echo "done."
 
         echo -n "Diff'ing previous and current schemas... "
-        migra --unsafe "${DB_PREVIOUS_URI}" "${DB_CURRENT_URI}" >${NEXT_MIGRATION_FILE}
+        migra --unsafe "${DB_PREVIOUS_URI}" "${DB_CURRENT_URI}" >${NEXT_MIGRATION_FILE} || true
         echo "done."
       fi
     fi
