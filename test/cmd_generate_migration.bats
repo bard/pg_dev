@@ -26,6 +26,8 @@ source ./test/common.bash
   touch migrations/000_none-628c46f278dd3da2.sql  
   NO_START_PG=1 run cmd_generate_migration schema.sql migrations
   test $status -eq 0
+  echo "$output" | grep --fixed-strings "Current schema fingerprint: 628c46f278dd3da2"
+  echo "$output" | grep --fixed-strings "Last migrated schema fingerprint: 628c46f278dd3da2"
   echo "$output" | grep --fixed-strings "Schema and last migration match, nothing to do."
 }
 

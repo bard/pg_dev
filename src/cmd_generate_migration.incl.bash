@@ -33,10 +33,12 @@ function cmd_generate_migration() {
   MIGRATION_DIRECTORY="$2"
   CURRENT_SCHEMA_FINGERPRINT=$(fingerprint_schema <$SCHEMA_FILE)  
   LAST_MIGRATION_FILE="$(get_last_migration_file $MIGRATION_DIRECTORY)"
+  LAST_MIGRATION_FINGERPRINT="$(get_migration_target_fingerprint ${LAST_MIGRATION_FILE})"
 
   echo "Schema file name: ${SCHEMA_FILE}"
   echo "Migration directory: ${MIGRATION_DIRECTORY}"
   echo "Current schema fingerprint: ${CURRENT_SCHEMA_FINGERPRINT}"
+  echo "Last migration file: ${LAST_MIGRATION_FILE}"
   echo "Last migrated schema fingerprint: ${LAST_MIGRATION_FINGERPRINT:-none}"
   echo "Last migrated schema commit: ${PREVIOUS_SCHEMA_COMMIT:-none}"
   
