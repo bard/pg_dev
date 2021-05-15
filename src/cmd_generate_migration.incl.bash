@@ -85,7 +85,8 @@ function cmd_generate_migration() {
         echo "done."
 
         echo -n "Diff'ing previous and current schemas... "
-        migra --unsafe "${DB_PREVIOUS_URI}" "${DB_CURRENT_URI}" >${NEXT_MIGRATION_FILE} || true
+        # XXX write test for privileges
+        migra --with-privileges --unsafe "${DB_PREVIOUS_URI}" "${DB_CURRENT_URI}" >${NEXT_MIGRATION_FILE} || true
         echo "done."
       fi
     fi
