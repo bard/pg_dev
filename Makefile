@@ -5,7 +5,7 @@ test-watch:
 	nodemon -w src -w test -e bash,bats --exec 'clear; bats -t test/*.bats'
 
 dist/schemachain: src/*.incl.bash
-	mkdir dist
+	mkdir -p dist
 	(echo -e '#!/bin/bash\nset -eu\n'; cat src/*.incl.bash; echo 'dispatch_command $$@') >$@
 	chmod +x $@
 
