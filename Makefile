@@ -12,6 +12,12 @@ dist/schemachain: src/*.incl.bash
 build-docker: dist/schemachain
 	docker build . -t schemachain:latest
 
+build-docker-watch:
+	nodemon -w src -w Dockerfile -w test -e bash,bats --exec 'make test && make build-docker'
+
 build: dist/schemachain
 
-.PHONY: test test-watch build build-docker build-docker-watch
+build-watch:
+	nodemon -w src -e bash --exec 'make dist/schemachain && cp dist/schemachain /home/bard/projects/syncplayer/modules/postgres/vendor'
+
+.PHONY: test test-watch build build-watch build-docker build-docker-watch
