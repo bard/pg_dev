@@ -1,0 +1,37 @@
+[tool.poetry]
+name = "schemachain"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+include = ["vendor/pg_tmp"]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+pglast = {git = "https://github.com/lelit/pglast", rev = "v3"}
+GitPython = "^3.1.17"
+migra = "^3.0.1616366383"
+sqlbag = "^0.1.1617247075"
+psycopg2-binary = "^2.8.6"
+click = "^8.0.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+watchdog = {extras = ["watchmedo"], version = "^2.1.1"}
+pytest-black = "^0.3.12"
+pylint = "^2.8.2"
+taskipy = "^1.7.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+
+[tool.taskipy.tasks]
+test = "python -m unittest tests/test_schemachain.py"
+test_watch = "watchmedo auto-restart -d schemachain -d tests python -- -m unittest tests/test_schemachain.py"
+lint = "pylint schemachain/*.py tests/*.py"
+lint_fix = "black schemachain/*.py tests/*.py"
+
+[tool.poetry.scripts]
+schemachain = 'schemachain.main:cli'
