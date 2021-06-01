@@ -1,5 +1,4 @@
 import re
-from .util import repo
 from schemachain.main import cmd_history, get_schema_history
 
 
@@ -33,7 +32,6 @@ def test_cmd_history(repo):
     )
 
     cmd_history("schema.sql")
-    pass
 
 
 def test_get_schema_history(repo):
@@ -61,23 +59,23 @@ def test_get_schema_history(repo):
     assert get_schema_history("schema.sql") == [
         {
             "fingerprint": "376ef48bf0288477",
-            "commit": pytest_regex("^[a-f0-9]{40}$"),
+            "commit": PytestRegex("^[a-f0-9]{40}$"),
             "message": "add vehicles",
         },
         {
             "fingerprint": "1cdda8b9f32e428b",
-            "commit": pytest_regex("^[a-f0-9]{40}$"),
+            "commit": PytestRegex("^[a-f0-9]{40}$"),
             "message": "add widgets",
         },
         {
             "fingerprint": "628c46f278dd3da2",
-            "commit": pytest_regex("^[a-f0-9]{40}$"),
+            "commit": PytestRegex("^[a-f0-9]{40}$"),
             "message": "initial import",
         },
     ]
 
 
-class pytest_regex:
+class PytestRegex:
     """Assert that a given string meets some expectations."""
 
     def __init__(self, pattern, flags=0):

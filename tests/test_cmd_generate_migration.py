@@ -1,9 +1,7 @@
-import sys
 import os
 from schemachain.main import (
     cmd_generate_migration,
 )
-from .util import repo
 
 
 def test_display_status_information(repo, capsys):
@@ -60,7 +58,10 @@ def test_produce_migration_from_last_migrated_schema_to_current_schema(repo):
     repo.index.commit(".")
 
     with open("schema.sql", "a") as file:
-        file.write("CREATE TABLE vehicles (id INTEGER, name TEXT);\n")
+        file.write(
+            "CREATE TABLE vehicles (id INTEGER, name TEXT);\n"
+        )  # pylint: disable=duplicate-code
+
     repo.index.add(["schema.sql"])
     repo.index.commit(".")
 
@@ -88,5 +89,5 @@ def test_generate_destructive_migrations(repo, capsys):
 
     assert "Schema file name: schema.sql" in out
     assert os.path.exists("migrations/001_628c46f278dd3da2-c0659d1fe44cd0ef.sql")
-    with open("migrations/001_628c46f278dd3da2-c0659d1fe44cd0ef.sql") as f:
-        assert 'alter table "public"."users" drop column "name";' in f.read()
+    with open("migrations/001_628c46f278dd3da2-c0659d1fe44cd0ef.sql") as file:
+        assert 'alter table "public"."users" drop column "name";' in file.read()

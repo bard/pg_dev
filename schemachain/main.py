@@ -1,14 +1,14 @@
-import sys
 import re
 import os
 import subprocess
 import time
 import contextlib
+from typing import cast
+
 import migra
 import sqlbag
 import git
 import click
-from typing import cast
 from pglast.parser import fingerprint  # pylint: disable=no-name-in-module
 
 
@@ -68,7 +68,7 @@ def cmd_generate_migration(schema_filename, migration_dir):
         next_migration_content = diff_schemas(
             previous_schema_content, current_schema_content
         )
-        assert next_migration_content != None
+        assert next_migration_content is not None
         with open(next_migration_filename, "w") as next_migration_file:
             next_migration_file.write(next_migration_content)
         print(f"Generated migration {next_migration_filename}")
@@ -135,13 +135,13 @@ def diff_schemas(previous_schema_content, current_schema_content):
         schema_migration.add_all_changes(privileges=True)
         if schema_migration.statements:
             sql = schema_migration.sql
-            if not type(sql) is str:
-                raise Exception(f"Type error: sql not a str")
+            if not isinstance(sql, str):
+                raise Exception("Type error: sql not a str")
             return cast(str, sql)
         return None
 
 
-def cmd_history(schema_filename):
+def cmd_history(_schema_filename):
     pass
 
 

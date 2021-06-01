@@ -4,7 +4,6 @@ from schemachain.main import (
     get_next_migration_index,
     get_schema_content_at_fingerprint,
 )
-from .util import repo
 
 
 def test_retrieve_name_of_last_migration_file(repo):
@@ -44,7 +43,7 @@ def test_get_schema_content_at_fingerprint(repo):
     first_schema_version = get_schema_content_at_fingerprint(
         "schema.sql", "628c46f278dd3da2"
     )
-    assert first_schema_version != None
+    assert first_schema_version is not None
     assert "users" in first_schema_version
     assert "widgets" not in first_schema_version
     assert "vehicles" not in first_schema_version
