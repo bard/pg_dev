@@ -94,6 +94,31 @@ class CmdGenerateMigrationsTestCase(unittest.TestCase):
             os.path.exists("migrations/001_628c46f278dd3da2-376ef48bf0288477.sql")
         )
 
+    def test_generate_destructive_migrations(self):
+        with open("schema.sql", "w") as file:
+            file.write("CREATE TABLE users (id INTEGER, name TEXT);\n")
+        self.repo.index.add(["schema.sql"])
+        self.repo.index.commit(".")
+
+        cmd_generate_migration("schema.sql", "migrations")
+        self.assertTrue(os.path.exists("migrations/000_none-628c46f278dd3da2.sql"))
+
+        with open("schema.sql", "w") as file:
+            file.write("CREATE TABLE users (id INTEGER);\n")
+        self.repo.index.add(["schema.sql"])
+        self.repo.index.commit(".")
+
+        cmd_generate_migration("schema.sql", "migrations")
+        self.assertTrue("Schema file name: schema.sql" in self.stdout.getvalue())
+
+        self.assertTrue(
+            os.path.exists("migrations/001_628c46f278dd3da2-c0659d1fe44cd0ef.sql")
+        )
+        with open("migrations/001_628c46f278dd3da2-c0659d1fe44cd0ef.sql") as f:
+            self.assertEqual(
+                True, 'alter table "public"."users" drop column "name";' in f.read()
+            )
+
 
 class InternalsTestCase(unittest.TestCase):
     def setUp(self):
