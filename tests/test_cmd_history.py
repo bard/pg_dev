@@ -1,56 +1,80 @@
-import sys
 import re
+from .util import repo
 from schemachain.main import cmd_history, get_schema_history
-from .base import BaseTestCase
 
 
-class ViewSchemaHistoryTestCase(BaseTestCase):
-    def write_schema_and_commit(self, sql, msg="[no msg]"):
-        with open("schema.sql", "w") as file:
-            file.write(sql)
-        self.repo.index.add(["schema.sql"])
-        self.repo.index.commit(msg)
+def write_schema_and_commit(repo, sql, msg="[no msg]"):
+    with open("schema.sql", "w") as file:
+        file.write(sql)
+    repo.index.add(["schema.sql"])
+    repo.index.commit(msg)
 
-    def test_cmd_history(self):
-        pass
 
-    def test_get_schema_history(self):
-        self.write_schema_and_commit(
-            "CREATE TABLE users (id INTEGER, name TEXT);\n", msg="initial import"
-        )
-        self.write_schema_and_commit(
-            """
-        CREATE TABLE users (id INTEGER, name TEXT);
-        CREATE TABLE widgets (id INTEGER, name TEXT);
-        """,
-            msg="add widgets",
-        )
-        self.write_schema_and_commit(
-            """
-        CREATE TABLE users (id INTEGER, name TEXT);
-        CREATE TABLE widgets (id INTEGER, name TEXT);
-        CREATE TABLE vehicles (id INTEGER, name TEXT);
-        """,
-            msg="add vehicles",
-        )
+def test_cmd_history(repo):
+    write_schema_and_commit(
+        repo, "CREATE TABLE users (id INTEGER, name TEXT);\n", msg="initial import"
+    )
+    write_schema_and_commit(
+        repo,
+        """
+    CREATE TABLE users (id INTEGER, name TEXT);
+    CREATE TABLE widgets (id INTEGER, name TEXT);
+    """,
+        msg="add widgets",
+    )
+    write_schema_and_commit(
+        repo,
+        """
+    CREATE TABLE users (id INTEGER, name TEXT);
+    CREATE TABLE widgets (id INTEGER, name TEXT);
+    CREATE TABLE vehicles (id INTEGER, name TEXT);
+    """,
+        msg="add vehicles",
+    )
 
-        assert get_schema_history("schema.sql") == [
-            {
-                "fingerprint": "376ef48bf0288477",
-                "commit": pytest_regex("^[a-f0-9]{40}$"),
-                "message": "add vehicles",
-            },
-            {
-                "fingerprint": "1cdda8b9f32e428b",
-                "commit": pytest_regex("^[a-f0-9]{40}$"),
-                "message": "add widgets",
-            },
-            {
-                "fingerprint": "628c46f278dd3da2",
-                "commit": pytest_regex("^[a-f0-9]{40}$"),
-                "message": "initial import",
-            },
-        ]
+    cmd_history("schema.sql")
+    pass
+
+
+def test_get_schema_history(repo):
+    write_schema_and_commit(
+        repo, "CREATE TABLE users (id INTEGER, name TEXT);\n", msg="initial import"
+    )
+    write_schema_and_commit(
+        repo,
+        """
+    CREATE TABLE users (id INTEGER, name TEXT);
+    CREATE TABLE widgets (id INTEGER, name TEXT);
+    """,
+        msg="add widgets",
+    )
+    write_schema_and_commit(
+        repo,
+        """
+    CREATE TABLE users (id INTEGER, name TEXT);
+    CREATE TABLE widgets (id INTEGER, name TEXT);
+    CREATE TABLE vehicles (id INTEGER, name TEXT);
+    """,
+        msg="add vehicles",
+    )
+
+    assert get_schema_history("schema.sql") == [
+        {
+            "fingerprint": "376ef48bf0288477",
+            "commit": pytest_regex("^[a-f0-9]{40}$"),
+            "message": "add vehicles",
+        },
+        {
+            "fingerprint": "1cdda8b9f32e428b",
+            "commit": pytest_regex("^[a-f0-9]{40}$"),
+            "message": "add widgets",
+        },
+        {
+            "fingerprint": "628c46f278dd3da2",
+            "commit": pytest_regex("^[a-f0-9]{40}$"),
+            "message": "initial import",
+        },
+    ]
 
 
 class pytest_regex:
