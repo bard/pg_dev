@@ -1,32 +1,11 @@
-import shutil
-import tempfile
-import io
 import os
-import sys
-import unittest
-import git
 from schemachain.main import (
     cmd_generate_migration,
-    get_migration_target_fingerprint,
-    get_last_migration_file,
-    get_next_migration_index,
-    get_schema_content_at_fingerprint,
 )
+from .base import BaseTestCase
 
 
-class CmdGenerateMigrationsTestCase(unittest.TestCase):
-    def setUp(self):
-        self.test_dir = tempfile.mkdtemp()
-        self.stdout = io.StringIO()
-        sys.stdout = self.stdout
-        os.chdir(self.test_dir)
-        os.mkdir("migrations")
-        self.repo = git.Repo.init(self.test_dir)
-
-    def tearDown(self):
-        shutil.rmtree(self.test_dir)
-        sys.stdout = sys.__stdout__
-
+class CmdGenerateMigrationsTestCase(BaseTestCase):
     def test_display_status_information(self):
         with open("schema.sql", "w") as file:
             file.write("CREATE TABLE users (id INTEGER, name TEXT);\n")
@@ -118,58 +97,3 @@ class CmdGenerateMigrationsTestCase(unittest.TestCase):
             self.assertEqual(
                 True, 'alter table "public"."users" drop column "name";' in f.read()
             )
-
-
-class InternalsTestCase(unittest.TestCase):
-    def setUp(self):
-        self.test_dir = tempfile.mkdtemp()
-        self.stdout = io.StringIO()
-        sys.stdout = self.stdout
-        os.chdir(self.test_dir)
-        os.mkdir("migrations")
-        self.repo = git.Repo.init(self.test_dir)
-
-    def tearDown(self):
-        shutil.rmtree(self.test_dir)
-        sys.stdout = sys.__stdout__
-
-    def test_retrieve_name_of_last_migration_file(self):
-        open("migrations/004_none-abc123.sql", "w").close()
-        open("migrations/005_abc123-def456.sql", "w").close()
-        open("migrations/006_def456-ghi789.sql", "w").close()
-        self.assertEqual("006_def456-ghi789.sql", get_last_migration_file("migrations"))
-
-    def test_read_target_fingerprint_from_migration_filename(self):
-        self.assertEqual(
-            "ghi789", get_migration_target_fingerprint("006_def456-ghi789.sql")
-        )
-
-    def test_get_next_migration_index(self):
-        open("migrations/004_none-abc123.sql", "w").close()
-        open("migrations/005_abc123-def456.sql", "w").close()
-        open("migrations/006_def456-ghi789.sql", "w").close()
-        self.assertEqual(7, get_next_migration_index("migrations"))
-
-    def test_get_schema_content_at_fingerprint(self):
-        with open("schema.sql", "w") as file:
-            file.write("CREATE TABLE users (id INTEGER, name TEXT);\n")
-        self.repo.index.add(["schema.sql"])
-        self.repo.index.commit(".")
-
-        with open("schema.sql", "a") as file:
-            file.write("CREATE TABLE users (id INTEGER, name TEXT);\n")
-        self.repo.index.add(["schema.sql"])
-        self.repo.index.commit(".")
-
-        with open("schema.sql", "a") as file:
-            file.write("CREATE TABLE vehicles (id INTEGER, name TEXT);\n")
-        self.repo.index.add(["schema.sql"])
-        self.repo.index.commit(".")
-
-        first_schema_version = get_schema_content_at_fingerprint(
-            "schema.sql", "628c46f278dd3da2"
-        )
-        assert first_schema_version != None
-        self.assertIn("users", first_schema_version)
-        self.assertIn("widgets", first_schema_version)
-        self.assertIn("vehicles", first_schema_version)

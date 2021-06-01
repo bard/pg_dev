@@ -29,7 +29,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.taskipy.tasks]
 test = "python -m unittest tests/test_schemachain.py"
-test_watch = "watchmedo auto-restart -d schemachain -d tests python -- -m unittest tests/test_schemachain.py"
+test_watch = "watchmedo auto-restart -d schemachain -d tests python -- -m unittest tests/test_*.py"
 lint = "pylint schemachain/*.py tests/*.py"
 format = "black schemachain/*.py tests/*.py"
 
