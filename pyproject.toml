@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "schemachain"
+name = "pg_dev"
 version = "0.1.0"
 description = ""
 authors = ["Your Name <you@example.com>"]
@@ -32,8 +32,8 @@ build-backend = "poetry.core.masonry.api"
 [tool.taskipy.tasks]
 test = "pytest tests"
 test_watch = "ptw"
-lint = "pylint --load-plugins pylint_pytest schemachain/*.py tests/*.py"
-format = "black schemachain/*.py tests/*.py"
+lint = "pylint --load-plugins pylint_pytest pg_dev/*.py tests/*.py"
+format = "black pg_dev/*.py tests/*.py"
 
 [tool.poetry.scripts]
-schemachain = 'schemachain.main:cli'
+pg_dev = 'pg_dev.main:cli'

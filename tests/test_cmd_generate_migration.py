@@ -1,5 +1,5 @@
 import os
-from schemachain.main import (
+from pg_dev.main import (
     cmd_generate_migration,
 )
 

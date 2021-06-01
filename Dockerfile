@@ -13,6 +13,6 @@ RUN apt-get update && \
     apt-get -y autoremove && \
     apt-get clean && rm -rf /tmp/* /var/tmp/* 
 
-COPY dist/schemachain /usr/local/bin/schemachain
+# XXX incomplete
 WORKDIR /repo
 ENTRYPOINT []

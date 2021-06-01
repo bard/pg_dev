@@ -1,5 +1,5 @@
 import re
-from schemachain.main import cmd_history, get_schema_history
+from pg_dev.main import cmd_history, get_schema_history
 
 
 def write_schema_and_commit(repo, sql, msg="[no msg]"):

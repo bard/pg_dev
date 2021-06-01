@@ -1,4 +1,4 @@
-from schemachain.main import (
+from pg_dev.main import (
     get_migration_target_fingerprint,
     get_last_migration_file,
     get_next_migration_index,
