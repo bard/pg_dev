@@ -1,3 +1,4 @@
+import sys
 import re
 import os
 import subprocess
@@ -21,6 +22,12 @@ def cli():
 @click.argument("migration_dir")
 def generate_migration(schema_filename, migration_dir):
     cmd_generate_migration(schema_filename, migration_dir)
+
+
+@cli.command()
+@click.argument("schema_filename")
+def history(schema_filename):
+    cmd_history(schema_filename)
 
 
 MIGRATION_FILENAME_PATTERN = "^([0-9]+)_([a-z0-9]+)-([a-z0-9]+)\\.sql$"
@@ -132,6 +139,22 @@ def diff_schemas(previous_schema_content, current_schema_content):
                 raise Exception(f"Type error: sql not a str")
             return cast(str, sql)
         return None
+
+
+def cmd_history(schema_filename):
+    pass
+
+
+def get_schema_history(schema_filename):
+    repo = git.Repo()
+    return [
+        {
+            "commit": commit.hexsha,
+            "fingerprint": fingerprint(repo.git.show(f"{commit}:{schema_filename}")),
+            "message": commit.message,
+        }
+        for commit in repo.iter_commits("--all", paths=schema_filename)
+    ]
 
 
 @contextlib.contextmanager
