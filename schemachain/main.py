@@ -7,6 +7,7 @@ import migra
 import sqlbag
 import git
 import click
+from typing import cast
 from pglast.parser import fingerprint  # pylint: disable=no-name-in-module
 
 
@@ -60,6 +61,7 @@ def cmd_generate_migration(schema_filename, migration_dir):
         next_migration_content = diff_schemas(
             previous_schema_content, current_schema_content
         )
+        assert next_migration_content != None
         with open(next_migration_filename, "w") as next_migration_file:
             next_migration_file.write(next_migration_content)
         print(f"Generated migration {next_migration_filename}")
@@ -100,7 +102,9 @@ def get_schema_content_at_fingerprint(schema_filename, target_fingerprint):
         if re.match("^commit", line)
     ]
     for commit in commits_involving_schema:
-        schema_content_at_commit = repo.git.show(f"{commit}:{schema_filename}")
+        schema_content_at_commit = cast(
+            str, repo.git.show(f"{commit}:{schema_filename}")
+        )
         if fingerprint(schema_content_at_commit) == target_fingerprint:
             return schema_content_at_commit
     return None
@@ -123,7 +127,10 @@ def diff_schemas(previous_schema_content, current_schema_content):
         schema_migration.set_safety(False)
         schema_migration.add_all_changes(privileges=True)
         if schema_migration.statements:
-            return schema_migration.sql
+            sql = schema_migration.sql
+            if not type(sql) is str:
+                raise Exception(f"Type error: sql not a str")
+            return cast(str, sql)
         return None
 
 

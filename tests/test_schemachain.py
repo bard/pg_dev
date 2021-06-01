@@ -169,6 +169,7 @@ class InternalsTestCase(unittest.TestCase):
         first_schema_version = get_schema_content_at_fingerprint(
             "schema.sql", "628c46f278dd3da2"
         )
-        self.assertTrue("users" in first_schema_version)
-        self.assertFalse("widgets" in first_schema_version)
-        self.assertFalse("vehicles" in first_schema_version)
+        assert first_schema_version != None
+        self.assertIn("users", first_schema_version)
+        self.assertIn("widgets", first_schema_version)
+        self.assertIn("vehicles", first_schema_version)
