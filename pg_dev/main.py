@@ -3,6 +3,7 @@ import os
 import subprocess
 import time
 import contextlib
+from tabulate import tabulate
 from typing import cast
 
 import migra
@@ -141,12 +142,16 @@ def diff_schemas(previous_schema_content, current_schema_content):
         return None
 
 
-def cmd_history(_schema_filename):
-    pass
-
-
-def get_schema_history(schema_filename):
+def cmd_history(schema_filename):
     repo = git.Repo()
+    data = [
+        [entry["fingerprint"], entry["message"], entry["commit"]]
+        for entry in get_schema_history(repo, schema_filename)
+    ]
+    print(tabulate(data, headers=["fingerprint", "commit message", "commit hash"]))
+
+
+def get_schema_history(repo, schema_filename):
     return [
         {
             "commit": commit.hexsha,

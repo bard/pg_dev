@@ -13,15 +13,16 @@ migra = "^3.0.1616366383"
 sqlbag = "^0.1.1617247075"
 psycopg2-binary = "^2.8.6"
 click = "^8.0.0"
+tabulate = "^0.8.9"
 
 [tool.poetry.dev-dependencies]
-pytest = "^5.2"
 watchdog = {extras = ["watchmedo"], version = "^2.1.1"}
 pytest-black = "^0.3.12"
 pylint = "^2.8.2"
 taskipy = "^1.7.0"
 pytest-watch = "^4.2.0"
 pylint-pytest = "^1.1.2"
+pytest = "^6.2.4"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -31,9 +32,13 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.taskipy.tasks]
 test = "pytest tests"
-test_watch = "ptw"
+test_watch = "ptw -- --capture=tee-sys"
 lint = "pylint --load-plugins pylint_pytest pg_dev/*.py tests/*.py"
 format = "black pg_dev/*.py tests/*.py"
 
 [tool.poetry.scripts]
 pg_dev = 'pg_dev.main:cli'
+
+[tool.pytest.ini_options]
+markers = [ "focus" ]
+
