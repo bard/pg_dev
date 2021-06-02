@@ -1,5 +1,3 @@
-import sys
-import pytest
 import re
 from pg_dev.main import cmd_history, get_schema_history
 

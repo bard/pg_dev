@@ -3,8 +3,8 @@ import os
 import subprocess
 import time
 import contextlib
-from tabulate import tabulate
 from typing import cast
+from tabulate import tabulate
 
 import migra
 import sqlbag
