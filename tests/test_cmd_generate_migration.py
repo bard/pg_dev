@@ -43,7 +43,7 @@ def test_do_nothing_when_current_schema_already_matches_last_migration(repo, cap
     assert "Schema and last migration match, nothing to do." in out
 
 
-def test_produce_migration_from_last_migrated_schema_to_current_schema(repo):
+def test_produce_migration_from_last_migrated_schema_to_current_schema(repo, capsys):
     with open("schema.sql", "w") as file:
         file.write("CREATE TABLE users (id INTEGER, name TEXT);\n")
     repo.index.add(["schema.sql"])
