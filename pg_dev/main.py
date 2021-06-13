@@ -3,10 +3,13 @@ import os
 import subprocess
 import time
 import contextlib
+import tempfile
+import shutil
 from typing import cast
 from tabulate import tabulate
-
+import shortuuid
 import migra
+import psycopg2
 import sqlbag
 import git
 import click
@@ -118,16 +121,8 @@ def get_schema_content_at_fingerprint(schema_filename, target_fingerprint):
     return None
 
 
-def launch_pg_tmp():
-    uri = subprocess.run(
-        [PG_TMP_EXEC, "-w", "10"], stdout=subprocess.PIPE, check=True
-    ).stdout.decode("utf-8")
-    time.sleep(0.1)
-    return uri
-
-
 def diff_schemas(previous_schema_content, current_schema_content):
-    with pg_tmp() as db_previous, pg_tmp() as db_current:
+    with pg_tmp_docker() as db_previous, pg_tmp_docker() as db_current:
         if previous_schema_content is not None:
             db_previous.execute(previous_schema_content)
         db_current.execute(current_schema_content)
@@ -163,7 +158,62 @@ def get_schema_history(repo, schema_filename):
 
 
 @contextlib.contextmanager
+def pg_tmp_docker():
+    tmp_dir = os.path.join(tempfile.gettempdir(), "pg_dev-tmp")
+    os.makedirs(tmp_dir, exist_ok=True)
+    pg_dir = tempfile.mkdtemp(dir=tmp_dir)
+    container_name = "postgres-pgdev-" + shortuuid.uuid()
+    try:
+        subprocess.run(
+            [
+                "docker",
+                "run",
+                "--rm",
+                "--name",
+                container_name,
+                "--detach",
+                "-e",
+                "POSTGRES_USER=pgdev",
+                "-e",
+                "POSTGRES_PASSWORD=pgdev",
+                "--tmpfs",
+                "/var/lib/postgresql/data",
+                "-v",
+                f"{pg_dir}:/var/run/postgresql",
+                "postgres:13",
+            ],
+            check=True,
+            stdout=subprocess.DEVNULL,
+        )
+        pg_uri = "postgresql://pgdev@/pgdev?host=" + pg_dir
+        wait_for_postgres(pg_uri)
+        with sqlbag.S(pg_uri) as pg_conn:
+            yield pg_conn
+    finally:
+        subprocess.run(["docker", "stop", container_name], stdout=subprocess.DEVNULL)
+
+
+@contextlib.contextmanager
 def pg_tmp():
-    pg_uri = launch_pg_tmp()
+    pg_uri = subprocess.run(
+        [PG_TMP_EXEC, "-w", "10"], stdout=subprocess.PIPE, check=True
+    ).stdout.decode("utf-8")
     with sqlbag.S(pg_uri) as pg_conn:
         yield pg_conn
+        # https://dba.stackexchange.com/questions/221063/how-to-shutdown-postgres-through-psql
+        pg_conn.execute("COPY (SELECT 1) TO PROGRAM 'pg_ctl stop -m smart --no-wait';")
+
+
+def wait_for_postgres(pg_uri):
+    start_time = time.time()
+    check_timeout = 30
+    check_interval = 1
+    while time.time() - start_time < check_timeout:
+        try:
+            conn = psycopg2.connect(pg_uri)
+            conn.close()
+            return True
+        except psycopg2.OperationalError:
+            time.sleep(check_interval)
+
+    raise Exception("Postgres did not appear")
