@@ -24,8 +24,12 @@ def cli():
 @cli.command()
 @click.argument("schema_filename")
 @click.argument("migration_dir")
-def generate_migration(schema_filename, migration_dir):
-    cmd_generate_migration(schema_filename, migration_dir)
+@click.option("--launcher", default="pg_tmp", help="Launcher (pg_tmp, docker).")
+@click.option(
+    "--docker-image", default="postgres:13", help="Image for docker launcher."
+)
+def generate_migration(schema_filename, migration_dir, **kwargs):
+    cmd_generate_migration(schema_filename, migration_dir, **kwargs)
 
 
 @cli.command()
@@ -38,9 +42,9 @@ MIGRATION_FILENAME_PATTERN = "^([0-9]+)_([a-z0-9]+)-([a-z0-9]+)\\.sql$"
 PG_TMP_EXEC = os.path.dirname(os.path.abspath(__file__)) + "/pg_tmp"
 
 
-def cmd_generate_migration(schema_filename, migration_dir):
     with open(schema_filename) as schema_file:
         current_schema_content = schema_file.read()
+def cmd_generate_migration(schema_filename, migration_dir, **kwargs):
     current_schema_fingerprint = fingerprint(current_schema_content)
     last_migration_filename = get_last_migration_file(migration_dir)
     last_migration_fingerprint = (
@@ -70,7 +74,7 @@ def cmd_generate_migration(schema_filename, migration_dir):
             )
 
         next_migration_content = diff_schemas(
-            previous_schema_content, current_schema_content
+            previous_schema_content, current_schema_content, **kwargs
         )
         assert next_migration_content is not None
         with open(next_migration_filename, "w") as next_migration_file:
@@ -121,8 +125,10 @@ def get_schema_content_at_fingerprint(schema_filename, target_fingerprint):
     return None
 
 
-def diff_schemas(previous_schema_content, current_schema_content):
-    with pg_tmp_docker() as db_previous, pg_tmp_docker() as db_current:
+def diff_schemas(previous_schema_content, current_schema_content, **kwargs):
+    with ephemeral_postgres(**kwargs) as db_previous, ephemeral_postgres(
+        **kwargs
+    ) as db_current:
         if previous_schema_content is not None:
             db_previous.execute(previous_schema_content)
         db_current.execute(current_schema_content)
@@ -158,50 +164,53 @@ def get_schema_history(repo, schema_filename):
 
 
 @contextlib.contextmanager
-def pg_tmp_docker():
-    tmp_dir = os.path.join(tempfile.gettempdir(), "pg_dev-tmp")
-    os.makedirs(tmp_dir, exist_ok=True)
-    pg_dir = tempfile.mkdtemp(dir=tmp_dir)
-    container_name = "postgres-pgdev-" + shortuuid.uuid()
-    try:
-        subprocess.run(
-            [
-                "docker",
-                "run",
-                "--rm",
-                "--name",
-                container_name,
-                "--detach",
-                "-e",
-                "POSTGRES_USER=pgdev",
-                "-e",
-                "POSTGRES_PASSWORD=pgdev",
-                "--tmpfs",
-                "/var/lib/postgresql/data",
-                "-v",
-                f"{pg_dir}:/var/run/postgresql",
-                "postgres:13",
-            ],
-            check=True,
-            stdout=subprocess.DEVNULL,
-        )
-        pg_uri = "postgresql://pgdev@/pgdev?host=" + pg_dir
-        wait_for_postgres(pg_uri)
+def ephemeral_postgres(launcher="pg_tmp", docker_image="postgres:13"):
+    if launcher == "pg_tmp":
+        pg_uri = subprocess.run(
+            [PG_TMP_EXEC, "-w", "10"], stdout=subprocess.PIPE, check=True
+        ).stdout.decode("utf-8")
         with sqlbag.S(pg_uri) as pg_conn:
             yield pg_conn
-    finally:
-        subprocess.run(["docker", "stop", container_name], stdout=subprocess.DEVNULL)
+            # https://dba.stackexchange.com/questions/221063/how-to-shutdown-postgres-through-psql
+            pg_conn.execute(
+                "COPY (SELECT 1) TO PROGRAM 'pg_ctl stop -m smart --no-wait';"
+            )
 
-
-@contextlib.contextmanager
-def pg_tmp():
-    pg_uri = subprocess.run(
-        [PG_TMP_EXEC, "-w", "10"], stdout=subprocess.PIPE, check=True
-    ).stdout.decode("utf-8")
-    with sqlbag.S(pg_uri) as pg_conn:
-        yield pg_conn
-        # https://dba.stackexchange.com/questions/221063/how-to-shutdown-postgres-through-psql
-        pg_conn.execute("COPY (SELECT 1) TO PROGRAM 'pg_ctl stop -m smart --no-wait';")
+    elif launcher == "docker":
+        tmp_dir = os.path.join(tempfile.gettempdir(), "pg_dev-tmp")
+        os.makedirs(tmp_dir, exist_ok=True)
+        pg_dir = tempfile.mkdtemp(dir=tmp_dir)
+        container_name = "postgres-pgdev-" + shortuuid.uuid()
+        try:
+            subprocess.run(
+                [
+                    "docker",
+                    "run",
+                    "--rm",
+                    "--name",
+                    container_name,
+                    "--detach",
+                    "-e",
+                    "POSTGRES_USER=pgdev",
+                    "-e",
+                    "POSTGRES_PASSWORD=pgdev",
+                    "--tmpfs",
+                    "/var/lib/postgresql/data",
+                    "-v",
+                    f"{pg_dir}:/var/run/postgresql",
+                    docker_image,
+                ],
+                check=True,
+                stdout=subprocess.DEVNULL,
+            )
+            pg_uri = "postgresql://pgdev@/pgdev?host=" + pg_dir
+            wait_for_postgres(pg_uri)
+            with sqlbag.S(pg_uri) as pg_conn:
+                yield pg_conn
+        finally:
+            subprocess.run(
+                ["docker", "stop", container_name], stdout=subprocess.DEVNULL
+            )
 
 
 def wait_for_postgres(pg_uri):

@@ -1,7 +1,6 @@
 import pytest
 from pg_dev.main import (
-    pg_tmp,
-    pg_tmp_docker,
+    ephemeral_postgres,
     get_migration_target_fingerprint,
     get_last_migration_file,
     get_next_migration_index,
@@ -9,14 +8,14 @@ from pg_dev.main import (
 )
 
 
-def test_pg_tmp():
-    with pg_tmp() as db_conn:
+def test_ephemeral_postgres_pg_tmp():
+    with ephemeral_postgres(launcher="pg_tmp") as db_conn:
         result = db_conn.execute("SELECT 1;")
         assert result.all() == [(1,)]
 
 
-def test_pg_tmp_docker():
-    with pg_tmp_docker() as db_conn:
+def test_ephemeral_postgres_docker():
+    with ephemeral_postgres(launcher="docker") as db_conn:
         result = db_conn.execute("SELECT 1;")
         assert result.all() == [(1,)]
 
