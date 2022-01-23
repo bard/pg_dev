@@ -7,7 +7,6 @@ include = ["vendor/pg_tmp"]
 
 [tool.poetry.dependencies]
 python = "^3.7"
-pglast = {git = "https://github.com/lelit/pglast", rev = "v3"}
 GitPython = "^3.1.17"
 migra = "^3.0.1616366383"
 sqlbag = "^0.1.1617247075"
@@ -16,6 +15,7 @@ click = "^8.0.0"
 tabulate = "^0.8.9"
 pytest-timeout = "^1.4.2"
 shortuuid = "^1.0.1"
+pglast = "^3.8"
 
 [tool.poetry.dev-dependencies]
 watchdog = {extras = ["watchmedo"], version = "^2.1.1"}

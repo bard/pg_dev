@@ -239,21 +239,14 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
 name = "pglast"
-version = "3.0"
+version = "3.8"
 description = "PostgreSQL Languages AST and statements prettifier"
 category = "main"
 optional = false
 python-versions = "*"
-develop = false
 
 [package.extras]
 dev = ["cython", "metapensiero.tool.bump-version", "pycparser", "readme-renderer"]
-
-[package.source]
-type = "git"
-url = "https://github.com/lelit/pglast"
-reference = "v3"
-resolved_reference = "46fc11649837a26785ca2531faab68ca678c9f85"
 
 [[package]]
 name = "pluggy"
@@ -590,7 +583,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=1.2.3)", "pytest-flake8", "pyt
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "b787e4ddf2aba2de43611798dce0dd02434779c969ac448845f54c272c08aa70"
+content-hash = "928c588505250c8c406ca9e7e097cf0a560940f8505e5ae24a9a379d728c29a9"
 
 [metadata.files]
 appdirs = [
@@ -747,7 +740,29 @@ pathspec = [
     {file = "pathspec-0.8.1-py2.py3-none-any.whl", hash = "sha256:aa0cb481c4041bf52ffa7b0d8fa6cd3e88a2ca4879c533c9153882ee2556790d"},
     {file = "pathspec-0.8.1.tar.gz", hash = "sha256:86379d6b86d75816baba717e64b1a3a3469deb93bb76d613c9ce79edc5cb68fd"},
 ]
-pglast = []
+pglast = [
+    {file = "pglast-3.8-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:951fa03a73943e94713f99f114164106ae5928f0c438804d7d3241704d23f62e"},
+    {file = "pglast-3.8-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:dfb63437691260a90f2b3d5c3a74842305f654b619467f1df41d1226cce041cd"},
+    {file = "pglast-3.8-cp310-cp310-manylinux_2_5_i686.manylinux1_i686.manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:ebf6e3a7b8e6baeaf056247d2cef0ac7e686fc728ccaf2e24a5bc4ccaa0be446"},
+    {file = "pglast-3.8-cp310-cp310-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:e104d678555c7af755506c105a88707b346820a405702fceaa77fec33bb52e77"},
+    {file = "pglast-3.8-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:6661c288a289402541fe53b832246753b02cd020ace3a9d1f4868159d6eb91fd"},
+    {file = "pglast-3.8-cp36-cp36m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:41837d750eb48c07e7ce7d9d248c8751cc2467cf20b2493daac8a677b4b9b7be"},
+    {file = "pglast-3.8-cp36-cp36m-manylinux_2_5_i686.manylinux1_i686.manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:59e11c22c93df282b14622691f8e5b2f0c8bf65d74a2ca156568a2caec61e240"},
+    {file = "pglast-3.8-cp36-cp36m-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:8f5f31ef46e4b94de9cdd1251e6aae40e77fcd5b45325da511db3fdbad1ff011"},
+    {file = "pglast-3.8-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:40b2cfee3e2d011a489e2eeb55487f8df631a92a14da2ffdfdf628d8414e82c9"},
+    {file = "pglast-3.8-cp37-cp37m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:27fa7c59e28bda307e5335c9a76dc37491331af572fcc0cd05f86dc59829b35b"},
+    {file = "pglast-3.8-cp37-cp37m-manylinux_2_5_i686.manylinux1_i686.manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:8544f8fd892f67e787b16e38a59bce346998b7e622cd0d4d4bbd8324787aa769"},
+    {file = "pglast-3.8-cp37-cp37m-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:b2328dd1a8d11115c74a4e844c4217c11b659d2959434a5a7da1dcb794042e8c"},
+    {file = "pglast-3.8-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:bd57d1306c9b7604d17fbe13bf38e2796ee8bae315bf90f05884fadcb44d3035"},
+    {file = "pglast-3.8-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:1d5b2fc617d958d1ed91318e1ef946a4fa81efb5476f138414ddb13ce51fc63a"},
+    {file = "pglast-3.8-cp38-cp38-manylinux_2_5_i686.manylinux1_i686.manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:13e5d2502d1961dc9d9ae2f8399100bca34489599dd2199960469671fcfb1e46"},
+    {file = "pglast-3.8-cp38-cp38-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:2b59b2f3db06465da7ecdbf9ab67c953b1895dc00890f313033f4549b39a1e4f"},
+    {file = "pglast-3.8-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:098c269dcaae88ae5d5c675a1ce90db0c8f43d2f2e087da4aa3daed681dd545f"},
+    {file = "pglast-3.8-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:1da2fbd2cde5073a4773e1dc5a0607cd35b340415df7f8927d58bd6e4e249acb"},
+    {file = "pglast-3.8-cp39-cp39-manylinux_2_5_i686.manylinux1_i686.manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:3c943c50d3f3a3540dd5be8225f73c26e562c53c1a0cef3f0a102190366439a8"},
+    {file = "pglast-3.8-cp39-cp39-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:395384747fdfeec3ae814714482102efddcabf34b2a73336b6dbfbe7e21dba47"},
+    {file = "pglast-3.8.tar.gz", hash = "sha256:31ad29b6a27048b1a26c072992fc5213d2eaf366854679e6c97111e300e0ef01"},
+]
 pluggy = [
     {file = "pluggy-0.13.1-py2.py3-none-any.whl", hash = "sha256:966c145cd83c96502c3c3868f50408687b38434af77734af1e9ca461a4081d2d"},
     {file = "pluggy-0.13.1.tar.gz", hash = "sha256:15b2acde666561e1298d71b523007ed7364de07029219b604cf808bfa1c765b0"},
