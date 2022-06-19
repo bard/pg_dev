@@ -1,63 +1,150 @@
-# An experimental git-centric workflow for better DX in Postgres schema development and migration management
+## An experimental source-centric, TDD-friendly SQL schema development workflow for Postgres
 
-## What is it
+Development usually flows from _sources_ to _live_: code, compile, test, commit, push, deploy. Source files are what you look at to know the state of development.
 
-Migration-based schema evolution has some intrinsic issues (you're hand-rolling a version control system on top of another; you can't look at the latest schema without running a database) plus some that are a consequence of specific practices (if you use a tool to generate migrations by diff'ing the dev and prod databases, you have a source of truth that is outside of your repository).
+With SQL development, however, it's not uncommon to start with _live_ (scribbling code in a database admin interface), and end up with migration files that we may call "sources" but really are opaque _targets_.
 
-While we're unlikely to ever be able to evolve databases like we evolve code — there's only so much we can do to change buildings (schemas) while people (data) are living in it — the experiment presented here aims at making schema evolution smoother and more reliable through a workflow that is:
+This makes it harder to reason about code, work in tight feedback loops and controlled environments (as allowed by TDD), and guard against regressions (lacking the unit tests resulting from TDD\*\*.
 
-- **transparent**: the latest schema is always available in the repository in plain SQL
-- **schema-driven**: the developer modifies the schema and, when happy, a migration is generating automatically by diff'ing against the previous schema
-- **git-centric** and **uni-directional**: repo is the source of truth, changes flow only from development to production, no runtime system needs to be queried to diff against previous schemas
+**`pg_dev` facilitates a source-centric workflow for (Postgre)SQL**, where the schema's source is a first-class citizen in the repository — you can view, edit, and test it like any other source — and migrations are automatically derived from schema changes.
+
+**This is alpha software.**
 
 ## How it works
 
-## Typical workflow
+1. You write a `schema.sql` file.
 
-1. make changes to `schema_file.sql`
-2. once you're happy, and before committing, run:
+2. Optionally (but ideally), you write tests using [pg_tap](https://pgtap.org/) and a file watcher sends schema and tests to a pristine Postgres environment on every change.
 
-```sh
-$ schemachain generate db/schema_file.sql db/migrations_dir
-```
+3. Once happy, you run `pg_dev generate-migration`, and `pg_dev` looks through git history for the last known schema, diffs it against the current one, and saves the resulting migration.
 
-3. a `migrations_dir/nnn_sourcehash-desthash.sql` get screated; stage it and `schema_file.sql` and then commit
-
-However, schemachain is only distributed as docker container, so that becomes:
+## Installation
 
 ```sh
-$ docker run \
-  --user "$(id -u):$(id -g)" -v /etc/passwd:/etc/passwd:ro -v $(pwd):/repo schemachain:latest \
-  schemachain generate-migration db/schema_file.sql db/migrations_dir
+$ python -m pip install https://github.com/bard/pg_dev/archive/master.tar.gz
 ```
 
-As that's lengthy, you might want to place it in a `Makefile` target, `package.json` script, or equivalent, and invoke it with `make migrate`, `npx migrate`, etc.
+## Tutorial
 
-Notes:
-
-- `--user $(id -u):$(id -g)` and `-v /etc/passwd:/etc/passwd:ro` cause migrations to be created on the host permissions; you can omit them, but migrations will be created with root as owner; see also [Arbiratry --user Notes](https://github.com/docker-library/docs/blob/master/postgres/README.md#arbitrary---user-notes) for why mounting `/etc/passwd` is needed.
-- `-v $(pwd)/repo` causes the current dir be mounted into the container, at the location where schemachain expects it.
-
-## Adopting in an existing project
-
-1. Dump the existing database schema:
+Create a git repository:
 
 ```sh
-pg_dump -U postgres -s --schema=public >schema.sql
+$ mkdir example
+$ cd example
+$ git init
 ```
 
-2. Clean this file up. You might want to e.g. move constrain creation to `CREATE TABLE` statements. This will be the go-to place for all schema-related work.
+Create `schema.sql`:
 
-3. Create a no-op migration that will only act as a checkpoint for the transition. For example, if migrations are stored in the `migrations` directory and the last migration is indexed at `13`:
+```sql
+CREATE TABLE users (
+  id uuid DEFAULT gen_random_uuid() NOT NULL,
+  name TEXT NOT NULL
+);
+```
+
+Create the migrations directory and generate the first migration:
 
 ```sh
-$ docker run --rm schemachain generate-migration schema.sql migrations 14
+$ mkdir migrations
+$ pg_dev generate-migration schema.sql migrations
+Schema file name: schema.sql
+Migration directory: migrations
+Current schema fingerprint: 7676866d0a1a57cb
+Last migrated schema fingerprint: none
+Generated migration migrations/000_none-7676866d0a1a57cb.sql
 ```
 
-This will generate `migrations/014_none-6dd578ee10c5d5e5.sql` file, meaning "migrating from no schema to schema 6dd578ee10c5d5e5".
+Add schema and migration to the repository and commit (there is no requirement to do these together, it just makes life easier for those looking at commit log later):
 
-5. Delete all content from `migrations/none_abcd1234-defg5678.sql`.
+```sh
+$ git add schema.sql migrations/000_none-7676866d0a1a57cb.sql
+$ git commit -m 'add database schema'
+```
 
-6. Commit the schema and the dummy migration.
+Make a change to the schema:
 
-## Troubleshooting
+```diff
+  CREATE TABLE users (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
++   address TEXT NOT NULL,
+    name TEXT NOT NULL
+  );
+```
+
+Generate the next migration:
+
+```sh
+$ pg_dev generate-migration schema.sql migrations
+Schema file name: schema.sql
+Migration directory: migrations
+Current schema fingerprint: 293a4f7b996ccceb
+Last migrated schema fingerprint: 7676866d0a1a57cb
+Last migrated schema commit: 4b095f75a874739a4f6cfc71e92dd61ba0cf75e8
+Generated migration migrations/001_7676866d0a1a57cb-293a4f7b996ccceb.sql
+```
+
+Add commit changes:
+
+```sh
+$ git add schema.sql migrations/001_7676866d0a1a57cb-293a4f7b996ccceb.sql
+$ git commit -m 'add address column'
+```
+
+Inspect the schema history so far:
+
+```sh
+$ pg_dev history schema.sql
+fingerprint       commit message       commit hash
+----------------  -------------------  ----------------------------------------
+293a4f7b996ccceb  add address column   cb3f41c51be0f5a4b72b4b70985ad438e172cb09
+7676866d0a1a57cb  add database schema  4b095f75a874739a4f6cfc71e92dd61ba0cf75e8
+```
+
+## Q&A
+
+### Does `pg_dev` generate migrations also on non-functional changes such as formatting, comments, or order of columns?
+
+No, `pg_dev` identifies schemas by finger-printing their _normalized_ versions, so those changes won't cause a migration.
+
+### Does `pg_dev` manage data migration?
+
+`pg_dev` only deals with DDL, however, you can manually extend migrations to account for data if desired.
+
+### How do I use this for TDD?
+
+Future versions of `pg_dev` will support watching files and running tests against an internally managed [ephemeral Postgres instance](https://eradman.com/ephemeralpg/) or Postgres Docker image, or an external arbitrary Postgres instance.
+
+For now, you'll have to provide a running Postgres instance, ensure it has access to the `pg_tap` extension (on Debian-based systems, install the `postgresql-13-pgtap` package), and run the provided [examples/run-test.sh](./examples/run-test.sh) script under a file watcher such as [watchexec](https://github.com/watchexec/watchexec):
+
+```sh
+$ PGHOST=localhost PGUSER=foo watchexec \
+    -w schema.sql -w tests \
+    "/path/to/run-tests.sh tests/*"
+```
+
+### Can I use any Postgres-supported SQL in defining a schema?
+
+The current diff engine, [migra](https://github.com/djrobstep/migra), has good coverage of DDL constructs with a few notable [exceptions](https://databaseci.com/docs/migra). In those cases, you'll have to fall back on editing migration files after generating them.
+
+A future version of `pg_dev` might switch to the diff engine from [pgAdmin](https://www.pgadmin.org/), Postgres's official administration tool.
+
+### Can I split my schema into multiple files and import them with `\i`?
+
+Only a single schema file is supported at the moment.
+
+# Caveats
+
+Rewriting past versions of the schema file will change their fingerprint, making it impossible for `pg_dev` to do its work.
+
+## Development
+
+To run tests:
+
+```sh
+$ poetry run task test
+```
+
+## Resources
+
+- [Overcoming First Principles — A guide for accessing the features of PostgreSQL in test-driven development](https://eradman.com/talks/overcoming_first_principles/)
