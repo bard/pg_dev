@@ -54,7 +54,7 @@ def test_get_schema_content_at_fingerprint(repo):
     repo.index.add(["schema.sql"])
     repo.index.commit(".")
 
-    first_schema_version = get_schema_content_at_fingerprint(
+    first_schema_version, _ = get_schema_content_at_fingerprint(
         "schema.sql", "628c46f278dd3da2"
     )
     assert first_schema_version is not None
