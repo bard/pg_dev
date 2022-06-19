@@ -43,7 +43,8 @@ PG_TMP_EXEC = os.path.dirname(os.path.abspath(__file__)) + "/pg_tmp"
 
 
 def cmd_generate_migration(schema_filename, migration_dir, **kwargs):
-    current_schema_content = read_schema(schema_filename)
+    with open(schema_filename) as schema_file:
+        current_schema_content = schema_file.read()
     current_schema_fingerprint = fingerprint(current_schema_content)
     last_migration_filename = get_last_migration_file(migration_dir)
     last_migration_fingerprint = (
@@ -116,18 +117,22 @@ def get_next_migration_index(migration_dir):
 
 
 def get_schema_content_at_fingerprint(schema_filename, target_fingerprint):
-    repo = git.Repo()
+    repo = git.Repo(os.path.dirname(schema_filename), search_parent_directories=True)
+    schema_repo_filename = os.path.relpath(schema_filename, repo.working_dir)
     commits_involving_schema = [
         line.split(" ")[1]
-        for line in repo.git.log(schema_filename).split("\n")
+        for line in repo.git.log(schema_repo_filename).split("\n")
         if re.match("^commit", line)
     ]
     for commit in commits_involving_schema:
         schema_content_at_commit = cast(
-            str, repo.git.show(f"{commit}:{schema_filename}")
+            str, repo.git.show(f"{commit}:{schema_repo_filename}")
         )
-        if fingerprint(schema_content_at_commit) == target_fingerprint:
-            return schema_content_at_commit
+        try:
+            if fingerprint(schema_content_at_commit) == target_fingerprint:
+                return schema_content_at_commit, commit
+        except:
+            pass
     return None
 
 
@@ -150,7 +155,7 @@ def diff_schemas(previous_schema_content, current_schema_content, **kwargs):
 
 
 def cmd_history(schema_filename):
-    repo = git.Repo()
+    repo = git.Repo(os.path.dirname(schema_filename), search_parent_directories=True)
     data = [
         [entry["fingerprint"], entry["message"], entry["commit"]]
         for entry in get_schema_history(repo, schema_filename)
