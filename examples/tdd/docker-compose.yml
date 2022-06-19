@@ -1,0 +1,13 @@
+version: "3.1"
+
+services:
+  postgres-test:
+    build:
+      context: .
+    command: -c fsync=off
+    ports:
+      - "127.0.0.1:5432:5432"
+    environment:
+      - "POSTGRES_HOST_AUTH_METHOD=trust"
+    tmpfs:
+      - /var/lib/postgresql

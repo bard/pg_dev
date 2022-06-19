@@ -115,13 +115,17 @@ No, `pg_dev` identifies schemas by finger-printing their _normalized_ versions, 
 
 Future versions of `pg_dev` will support watching files and running tests against an internally managed [ephemeral Postgres instance](https://eradman.com/ephemeralpg/) or Postgres Docker image, or an external arbitrary Postgres instance.
 
-For now, you'll have to provide a running Postgres instance, ensure it has access to the `pg_tap` extension (on Debian-based systems, install the `postgresql-13-pgtap` package), and run the provided [examples/run-test.sh](./examples/run-test.sh) script under a file watcher such as [watchexec](https://github.com/watchexec/watchexec):
+For now, you'll have to provide a running Postgres instance, ensure it has access to the `pg_tap` extension (on Debian-based systems, install the `postgresql-13-pgtap` package), and run the provided [examples/run-test.sh](./examples/tdd/run-test.sh) script under a file watcher such as [watchexec](https://github.com/watchexec/watchexec).
+
+For a complete worked example:
 
 ```sh
-$ PGHOST=localhost PGUSER=foo watchexec \
-    -w schema.sql -w tests \
-    "/path/to/run-tests.sh tests/*"
+$ cd examples/tdd
+$ docker-compose up -d # starts postgres+pgtap in container
+$ watchexec -w schema.sql -w tests "./run-tests.sh tests/*"
 ```
+
+Then edit `schema.sql` or files under `tests/`.
 
 ### Can I use any Postgres-supported SQL in defining a schema?
 
