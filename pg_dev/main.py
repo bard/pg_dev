@@ -42,9 +42,8 @@ MIGRATION_FILENAME_PATTERN = "^([0-9]+)_([a-z0-9]+)-([a-z0-9]+)\\.sql$"
 PG_TMP_EXEC = os.path.dirname(os.path.abspath(__file__)) + "/pg_tmp"
 
 
-    with open(schema_filename) as schema_file:
-        current_schema_content = schema_file.read()
 def cmd_generate_migration(schema_filename, migration_dir, **kwargs):
+    current_schema_content = read_schema(schema_filename)
     current_schema_fingerprint = fingerprint(current_schema_content)
     last_migration_filename = get_last_migration_file(migration_dir)
     last_migration_fingerprint = (
@@ -69,9 +68,16 @@ def cmd_generate_migration(schema_filename, migration_dir, **kwargs):
         else:
             next_migration_index = get_next_migration_index(migration_dir)
             next_migration_filename = f"{migration_dir}/{next_migration_index:03}_{last_migration_fingerprint}-{current_schema_fingerprint}.sql"  # pylint: disable=line-too-long
-            previous_schema_content = get_schema_content_at_fingerprint(
+            previous_schema = get_schema_content_at_fingerprint(
                 schema_filename, last_migration_fingerprint
             )
+            if previous_schema is not None:
+                previous_schema_content, commit = previous_schema
+                print(f"Last migrated schema commit: {commit}")
+            else:
+                raise Exception(
+                    f"Could not find a commit for schema with fingerprint {last_migration_fingerprint}"
+                )
 
         next_migration_content = diff_schemas(
             previous_schema_content, current_schema_content, **kwargs
